@@ -110,34 +110,8 @@ async def initialize_tokens():
     except Exception as e:
         logger.error(f"❌ Ошибка при инициализации токенов: {e}")
 
-# HTTP Server for health checks (wake-on-webhook)
-app = web.Application()
-bot_instance = None
-
-async def health_check(request):
-    """Health check endpoint for Render wake-on-webhook"""
-    return web.Response(text="OK", status=200)
-
-async def webhook_handler(request):
-    """Webhook handler for Telegram bot"""
-    if bot_instance:
-        update = await request.json()
-        # Process update through dispatcher
-        # This is a simplified version - full webhook setup requires more configuration
-        return web.Response(text="OK", status=200)
-    return web.Response(text="Bot not ready", status=503)
-
-app.router.add_get('/health', health_check)
-app.router.add_post('/webhook', webhook_handler)
-
-async def start_http_server():
-    """Start HTTP server for health checks"""
-    port = int(os.getenv('PORT', 8080))
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', port)
-    await site.start()
-    logger.info(f"🌐 HTTP сервер запущен на порту {port}")
+# HTTP Application (will be created in main)
+app = None
 
 async def scheduled_tasks():
     """Background tasks"""
@@ -218,12 +192,21 @@ async def main():
         WEBHOOK_PATH = "/webhook"
         WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
         
+        # Создаем aiohttp приложение
+        global app
+        app = web.Application()
+        
+        # Добавляем health check endpoint
+        async def health_check(request):
+            return web.Response(text="OK", status=200)
+        app.router.add_get('/health', health_check)
+        
         # Удаляем старый webhook и устанавливаем новый
         await bot.delete_webhook(drop_pending_updates=True)
         await bot.set_webhook(WEBHOOK_URL)
         logger.info(f"✅ Webhook установлен: {WEBHOOK_URL}")
         
-        # Настраиваем aiohttp приложение
+        # Настраиваем webhook handler
         webhook_requests_handler = SimpleRequestHandler(
             dispatcher=dp,
             bot=bot,
@@ -247,17 +230,11 @@ async def main():
         logger.error(f"❌ Ошибка сети: {e}")
     except Exception as e:
         logger.error(f"❌ Неожиданная ошибка: {e}")
+        import traceback
+        traceback.print_exc()
     finally:
-        # Правильное закрытие сессии для aiogram 3.x
-        try:
-            session = await bot.get_session()
-            await session.close()
-            logger.info("👋 Бот остановлен корректно")
-        except Exception as e:
-            logger.error(f"⚠️ Ошибка при остановке бота: {e}")
-        finally:
-            # Удаляем PID файл при завершении
-            cleanup_pid_file()
+        # Удаляем PID файл при завершении
+        cleanup_pid_file()
 
 if __name__ == '__main__':
     asyncio.run(main())
