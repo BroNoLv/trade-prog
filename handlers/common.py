@@ -31,19 +31,29 @@ async def start_command(message: types.Message, state: FSMContext):
 async def process_token(message: types.Message, state: FSMContext):
     """Process entered token"""
     token = message.text.strip()
+    logger.info(f"🔍 Проверяем токен: {token} от пользователя {message.from_user.id}")
+    
     user = await AuthService.authenticate_user(
         token, 
         message.from_user.id, 
         message.from_user.username
     )
     
+    logger.info(f"📋 Результат авторизации: {user}")
+    
     if not user:
+        logger.info("❌ Токен не найден в БД")
         await message.answer("❌ Неверный токен. Попробуйте еще раз:")
         return
     
     await state.clear()
     
     role = user['role']
+    is_active = user.get('is_active', True)
+    insurance_confirmed = user.get('insurance_deposit_confirmed', True)
+    
+    logger.info(f"👤 Данные пользователя: role={role}, is_active={is_active}, insurance_confirmed={insurance_confirmed}")
+    
     role_names = {
         "owner": "Владелец",
         "trader": "Трейдер",
@@ -58,7 +68,8 @@ async def process_token(message: types.Message, state: FSMContext):
     """
     
     if role == "trader":
-        if not user['insurance_deposit_confirmed']:
+        if not insurance_confirmed:
+            logger.info("❌ Трейдер без подтвержденного депозита - доступ запрещен")
             welcome_message += f"""
             
 ⚠️ ВНИМАНИЕ:
@@ -72,14 +83,15 @@ async def process_token(message: types.Message, state: FSMContext):
 ⚠️ Доступ к функционалу будет ограничен до подтверждения депозита.
 Вы можете проверить статус в "Личном кабинете".
             """
-        elif not user.get('is_active', True):
+        elif not is_active:
+            logger.info("❌ Трейдер деактивирован - доступ запрещен")
             welcome_message += f"""
             
 ⚠️ Ваш аккаунт деактивирован.
 Обратитесь к владельцу для активации.
             """
     
-    deposit_confirmed = user.get('insurance_deposit_confirmed', True) if role == "trader" else True
+    deposit_confirmed = insurance_confirmed if role == "trader" else True
     await message.answer(welcome_message, reply_markup=get_main_menu(role, deposit_confirmed))
 
 async def logout_command(message: types.Message, state: FSMContext):
