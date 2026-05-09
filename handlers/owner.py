@@ -23,18 +23,18 @@ class OwnerStates(StatesGroup):
     confirming_deposit = State()
     confirming_working_deposit = State()
 
-# ============== СТАТИСТИКА ==============
+# ============== пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ==============
 async def show_owner_stats_menu(message: types.Message):
-    """Меню выбора периода статистики"""
-    await message.answer("?? Выберите период для статистики:", reply_markup=get_stats_period_menu())
+    """пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"""
+    await message.answer("?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:", reply_markup=get_stats_period_menu())
 
 async def show_stats_by_period(message: types.Message):
-    """Показать общую статистику"""
-    await show_stats_with_filter(message, "", "за все время")
+    """пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"""
+    await show_stats_with_filter(message, "", "пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ")
 
 async def process_stats_start_date(message: types.Message, state: FSMContext):
-    """Обработать начальную дату"""
-    if message.text == "?? Назад":
+    """пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ"""
+    if message.text == "?? пїЅпїЅпїЅпїЅпїЅ":
         await state.clear()
         await show_owner_stats_menu(message)
         return
@@ -44,16 +44,16 @@ async def process_stats_start_date(message: types.Message, state: FSMContext):
         await state.update_data(start_date=start_date)
         await OwnerStates.waiting_stats_end_date.set()
         await message.answer(
-            "?? Введите конечную дату в формате ДД.ММ.ГГГГ:\n"
-            "Пример: 31.12.2024",
+            "?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ.пїЅпїЅ.пїЅпїЅпїЅпїЅ:\n"
+            "пїЅпїЅпїЅпїЅпїЅпїЅ: 31.12.2024",
             reply_markup=get_back_button()
         )
     except ValueError:
-        await message.answer("? Неверный формат даты. Используйте ДД.ММ.ГГГГ:")
+        await message.answer("? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ.пїЅпїЅ.пїЅпїЅпїЅпїЅ:")
 
 async def process_stats_end_date(message: types.Message, state: FSMContext):
-    """Обработать конечную дату"""
-    if message.text == "?? Назад":
+    """пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ"""
+    if message.text == "?? пїЅпїЅпїЅпїЅпїЅ":
         await state.clear()
         await show_owner_stats_menu(message)
         return
@@ -64,22 +64,22 @@ async def process_stats_end_date(message: types.Message, state: FSMContext):
         start_date = data.get('start_date')
 
         if end_date < start_date:
-            await message.answer("? Конечная дата должна быть позже начальной:")
+            await message.answer("? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:")
             return
 
         date_filter = f"AND d.created_at >= '{start_date.strftime('%Y-%m-%d')}' AND d.created_at <= '{end_date.strftime('%Y-%m-%d 23:59:59')}'"
-        period_text = f"с {start_date.strftime('%d.%m.%Y')} по {end_date.strftime('%d.%m.%Y')}"
+        period_text = f"пїЅ {start_date.strftime('%d.%m.%Y')} пїЅпїЅ {end_date.strftime('%d.%m.%Y')}"
 
         await state.clear()
         await show_stats_with_filter(message, date_filter, period_text)
 
     except ValueError:
-        await message.answer("? Неверный формат даты. Используйте ДД.ММ.ГГГГ:")
+        await message.answer("? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ.пїЅпїЅ.пїЅпїЅпїЅпїЅ:")
 
 async def show_stats_with_filter(message: types.Message, date_filter: str, period_text: str):
-    """Показать статистику с фильтром"""
+    """пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"""
     async with db.pool.acquire() as conn:
-        # Статистика пользователей
+        # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         user_stats = await conn.fetchrow('''
             SELECT
                 COUNT(*) as total_users,
@@ -88,7 +88,7 @@ async def show_stats_with_filter(message: types.Message, date_filter: str, perio
             FROM users
         ''')
 
-        # Статистика сделок
+        # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         stats = await conn.fetchrow(f'''
             SELECT
                 COUNT(DISTINCT d.deal_id) as total_deals,
@@ -99,7 +99,7 @@ async def show_stats_with_filter(message: types.Message, date_filter: str, perio
             WHERE 1=1 {date_filter} AND d.is_deleted = FALSE
         ''')
 
-        # Статистика по статусам сделок
+        # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         deal_stats = await conn.fetchrow(f'''
             SELECT
                 COUNT(CASE WHEN status = 'confirmed' THEN 1 END) as confirmed,
@@ -114,32 +114,32 @@ async def show_stats_with_filter(message: types.Message, date_filter: str, perio
         rate = await ExchangeService.get_current_rate()
 
         stats_text = f"""
-?? Статистика системы ({period_text})
+?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ ({period_text})
 
-?? Пользователи:
-• Всего: {user_stats['total_users'] or 0}
-• Трейдеров: {user_stats['traders'] or 0}
-• Операторов: {user_stats['operators'] or 0}
+?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:
+пїЅ пїЅпїЅпїЅпїЅпїЅ: {user_stats['total_users'] or 0}
+пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {user_stats['traders'] or 0}
+пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {user_stats['operators'] or 0}
 
-?? Финансы:
-• Всего сделок: {stats['total_deals'] or 0}
-• Общий оборот: {stats['total_rub'] or 0:.2f} RUB
-• В USDT: {stats['total_usdt'] or 0:.2f} USDT
-• Средняя сделка: {stats['avg_deal_rub'] or 0:.2f} RUB
-• Текущий курс: {rate} RUB/USDT
+?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅ:
+пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ: {stats['total_deals'] or 0}
+пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ: {stats['total_rub'] or 0:.2f} RUB
+пїЅ пїЅ USDT: {stats['total_usdt'] or 0:.2f} USDT
+пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ: {stats['avg_deal_rub'] or 0:.2f} RUB
+пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ: {rate} RUB/USDT
 
-?? Статусы сделок:
-? Подтверждено: {deal_stats['confirmed'] or 0}
-? В ожидании: {deal_stats['pending'] or 0}
-? Истекло: {deal_stats['expired'] or 0}
-?? Споров: {deal_stats['disputed'] or 0}
-?? Отклонено: {deal_stats['rejected'] or 0}
+?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ:
+? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {deal_stats['confirmed'] or 0}
+? пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {deal_stats['pending'] or 0}
+? пїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {deal_stats['expired'] or 0}
+?? пїЅпїЅпїЅпїЅпїЅпїЅ: {deal_stats['disputed'] or 0}
+?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {deal_stats['rejected'] or 0}
 """
 
         keyboard = types.InlineKeyboardMarkup()
         keyboard.add(
             types.InlineKeyboardButton(
-                "?? Назад",
+                "?? пїЅпїЅпїЅпїЅпїЅ",
                 callback_data="back_to_stats_menu"
             )
         )
@@ -147,66 +147,66 @@ async def show_stats_with_filter(message: types.Message, date_filter: str, perio
         await message.answer(stats_text, reply_markup=keyboard)
 
 async def back_to_stats_menu_callback(callback_query: types.CallbackQuery):
-    """Вернуться в главное меню владельца"""
+    """пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"""
     await callback_query.message.delete()
-    await callback_query.message.answer("Главное меню:", reply_markup=get_main_menu('owner'))
+    await callback_query.message.answer("пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ:", reply_markup=get_main_menu('owner'))
 
 async def delete_deals_callback(callback_query: types.CallbackQuery):
-    """Удалить сделки за период"""
+    """пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ"""
     try:
         data = callback_query.data
         date_filter = data.replace("delete_deals_", "")
         
         async with db.pool.acquire() as conn:
-            # Подсчитываем количество сделок для удаления
+            # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             count = await conn.fetchrow(f'''
                 SELECT COUNT(*) as count FROM deals
                 WHERE 1=1 {date_filter} AND is_deleted = FALSE
             ''')
             
             if count['count'] == 0:
-                await callback_query.answer("? Нет сделок для удаления")
+                await callback_query.answer("? пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
                 return
             
-            # Помечаем сделки как удаленные
+            # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             result = await conn.execute(f'''
                 UPDATE deals SET is_deleted = TRUE
                 WHERE 1=1 {date_filter} AND is_deleted = FALSE
             ''')
             
-            await callback_query.answer(f"? Удалено {result.split()[1]} сделок")
+            await callback_query.answer(f"? пїЅпїЅпїЅпїЅпїЅпїЅпїЅ {result.split()[1]} пїЅпїЅпїЅпїЅпїЅпїЅ")
             await callback_query.message.edit_text(
-                f"{callback_query.message.text}\n\n? Удалено {result.split()[1]} сделок"
+                f"{callback_query.message.text}\n\n? пїЅпїЅпїЅпїЅпїЅпїЅпїЅ {result.split()[1]} пїЅпїЅпїЅпїЅпїЅпїЅ"
             )
             
     except Exception as e:
         print(f"Error in delete_deals_callback: {e}")
-        await callback_query.answer("? Ошибка удаления")
+        await callback_query.answer("? пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
 
-# ============== УПРАВЛЕНИЕ ТОКЕНАМИ ==============
+# ============== пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ==============
 async def manage_tokens_start(message: types.Message):
     """Start token management"""
-    await message.answer("?? Управление токенами:", reply_markup=get_owner_tokens_menu())
+    await message.answer("?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:", reply_markup=get_owner_tokens_menu())
 
 async def create_token_start(message: types.Message, state: FSMContext):
     """Start creating new token"""
     await state.set_state(OwnerStates.waiting_token_role.state)
     await message.answer(
-        "?? Выберите роль для нового токена:\n"
-        "Введите 'trader', 'operator' или 'owner'",
+        "?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ:\n"
+        "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ 'trader', 'operator' пїЅпїЅпїЅ 'owner'",
         reply_markup=get_back_button()
     )
 
 async def process_token_role(message: types.Message, state: FSMContext):
     """Process token role and generate token"""
-    if message.text == "?? Назад":
+    if message.text == "?? пїЅпїЅпїЅпїЅпїЅ":
         await state.clear()
         await manage_tokens_start(message)
         return
     
     role = message.text.lower()
     if role not in ['trader', 'operator', 'owner']:
-        await message.answer("? Некорректная роль. Введите 'trader', 'operator' или 'owner':")
+        await message.answer("? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅ 'trader', 'operator' пїЅпїЅпїЅ 'owner':")
         return
     
     # Generate token
@@ -228,16 +228,16 @@ async def process_token_role(message: types.Message, state: FSMContext):
     
     await state.clear()
     await message.answer(
-        f"? Токен успешно создан!\n\n"
-        f"Роль: {role}\n"
-        f"Токен: `{token}`\n\n"
-        f"?? Сохраните этот токен! Он больше не будет показан.",
+        f"? пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ!\n\n"
+        f"пїЅпїЅпїЅпїЅ: {role}\n"
+        f"пїЅпїЅпїЅпїЅпїЅ: `{token}`\n\n"
+        f"?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ! пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.",
         parse_mode="Markdown",
         reply_markup=get_main_menu('owner')
     )
 
 async def list_tokens(message: types.Message):
-    """Show list of all tokens (только активные)"""
+    """Show list of all tokens (пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)"""
     async with db.pool.acquire() as conn:
         tokens = await conn.fetch(
             '''
@@ -249,15 +249,15 @@ async def list_tokens(message: types.Message):
         )
         
         if not tokens:
-            await message.answer("?? Активных токенов нет")
+            await message.answer("?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ")
             return
         
-        tokens_text = "?? Список активных токенов:\n\n"
+        tokens_text = "?? пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ:\n\n"
         for token in tokens:
             tokens_text += f"""
 {token['role'].upper()}
-Токен: `{token['token']}`
-Создан: {token['created_at'].strftime('%d.%m.%Y %H:%M')}
+пїЅпїЅпїЅпїЅпїЅ: `{token['token']}`
+пїЅпїЅпїЅпїЅпїЅпїЅ: {token['created_at'].strftime('%d.%m.%Y %H:%M')}
 """
         
         await message.answer(tokens_text, parse_mode="Markdown")
@@ -266,13 +266,13 @@ async def deactivate_token_start(message: types.Message, state: FSMContext):
     """Start deactivating token"""
     await state.set_state(OwnerStates.deactivating_token.state)
     await message.answer(
-        "? Введите токен для деактивации:",
+        "? пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:",
         reply_markup=get_back_button()
     )
 
 async def process_deactivate_token(message: types.Message, state: FSMContext):
-    """Deactivate token (удаляем из системы)"""
-    if message.text == "?? Назад":
+    """Deactivate token (пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ)"""
+    if message.text == "?? пїЅпїЅпїЅпїЅпїЅ":
         await state.clear()
         await manage_tokens_start(message)
         return
@@ -280,53 +280,53 @@ async def process_deactivate_token(message: types.Message, state: FSMContext):
     token = message.text.strip()
     
     async with db.pool.acquire() as conn:
-        # Удаляем токен полностью
+        # пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         result = await conn.execute(
             "DELETE FROM tokens WHERE token = $1 RETURNING token",
             token
         )
         
         if "0" in str(result):
-            await message.answer("? Токен не найден")
+            await message.answer("? пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ")
         else:
-            await message.answer("? Токен удален из системы")
+            await message.answer("? пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
     
     await state.clear()
-    await message.answer("Главное меню:", reply_markup=get_main_menu('owner'))
+    await message.answer("пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ:", reply_markup=get_main_menu('owner'))
 
-# ============== УПРАВЛЕНИЕ КУРСОМ ==============
+# ============== пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ ==============
 async def manage_exchange_rate(message: types.Message):
     """Manage exchange rate"""
     rate = await ExchangeService.get_current_rate()
     
     keyboard = types.InlineKeyboardMarkup()
     keyboard.row(
-        types.InlineKeyboardButton("?? Обновить автоматически", callback_data="update_rate_auto"),
-        types.InlineKeyboardButton("?? Установить вручную", callback_data="set_rate_manual")
+        types.InlineKeyboardButton("?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", callback_data="update_rate_auto"),
+        types.InlineKeyboardButton("?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ", callback_data="set_rate_manual")
     )
     
     await message.answer(
-        f"?? Текущий курс USDT: {rate} RUB\n\n"
-        f"Выберите действие:",
+        f"?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ USDT: {rate} RUB\n\n"
+        f"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:",
         reply_markup=keyboard
     )
 
 async def update_rate_auto_callback(callback_query: types.CallbackQuery):
     """Handle auto rate update callback"""
     try:
-        await callback_query.answer("?? Обновление курса...")
+        await callback_query.answer("?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ...")
         rate = await ExchangeService.update_rate_automatically()
         
         if rate:
-            await callback_query.message.edit_text(f"? Курс обновлен автоматически: {rate} RUB")
+            await callback_query.message.edit_text(f"? пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {rate} RUB")
         else:
             await callback_query.message.edit_text(
-                "? Не удалось обновить курс автоматически\n"
-                "Используйте ручную установку курса"
+                "? пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ\n"
+                "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ"
             )
     except Exception as e:
         print(f"Error in update_rate_auto_callback: {e}")
-        await callback_query.message.edit_text(f"? Ошибка: {str(e)}")
+        await callback_query.message.edit_text(f"? пїЅпїЅпїЅпїЅпїЅпїЅ: {str(e)}")
 
 async def set_rate_manual_callback(callback_query: types.CallbackQuery, state: FSMContext):
     """Handle manual rate set callback"""
@@ -334,8 +334,8 @@ async def set_rate_manual_callback(callback_query: types.CallbackQuery, state: F
     await OwnerStates.setting_exchange_rate.set()
     
     await callback_query.message.answer(
-        "?? Введите новый курс USDT в RUB:\n"
-        "Пример: 95.50",
+        "?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ USDT пїЅ RUB:\n"
+        "пїЅпїЅпїЅпїЅпїЅпїЅ: 95.50",
         reply_markup=get_back_button()
     )
 
@@ -343,16 +343,16 @@ async def set_rate_manual_start(message: types.Message, state: FSMContext):
     """Start manual rate setting"""
     await state.set_state(OwnerStates.setting_exchange_rate.state)
     await message.answer(
-        "?? Введите новый курс USDT в RUB:\n"
-        "Пример: 95.50",
+        "?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ USDT пїЅ RUB:\n"
+        "пїЅпїЅпїЅпїЅпїЅпїЅ: 95.50",
         reply_markup=get_back_button()
     )
 
 async def process_manual_rate(message: types.Message, state: FSMContext):
     """Process manual rate"""
-    if message.text == "?? Назад":
+    if message.text == "?? пїЅпїЅпїЅпїЅпїЅ":
         await state.clear()
-        await message.answer("Главное меню:", reply_markup=get_main_menu('owner'))
+        await message.answer("пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ:", reply_markup=get_main_menu('owner'))
         return
     
     try:
@@ -370,24 +370,24 @@ async def process_manual_rate(message: types.Message, state: FSMContext):
         
         await state.clear()
         await message.answer(
-            f"? Курс установлен: {rate} RUB/USDT",
+            f"? пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {rate} RUB/USDT",
             reply_markup=get_main_menu('owner')
         )
         
     except ValueError:
-        await message.answer("? Введите корректное число (больше 0):")
+        await message.answer("? пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅ 0):")
 
 async def auto_update_rate(message: types.Message):
     """Auto update exchange rate"""
-    await message.answer("?? Обновление курса...")
+    await message.answer("?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ...")
     rate = await ExchangeService.update_rate_automatically()
     
     if rate:
-        await message.answer(f"? Курс обновлен: {rate} RUB/USDT")
+        await message.answer(f"? пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {rate} RUB/USDT")
     else:
-        await message.answer("? Не удалось обновить курс")
+        await message.answer("? пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ")
 
-# ============== УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ ==============
+# ============== пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ==============
 async def manage_users(message: types.Message):
     """Manage users and their balances"""
     async with db.pool.acquire() as conn:
@@ -401,31 +401,31 @@ async def manage_users(message: types.Message):
         ''')
         
         if not traders:
-            await message.answer("?? Трейдеров нет в системе")
+            await message.answer("?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
             return
         
-        users_text = "?? Список трейдеров:\n\n"
+        users_text = "?? пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:\n\n"
         
         for trader in traders:
             status = "?" if trader['insurance_deposit_confirmed'] else "?"
             active_status = "??" if trader['is_active'] else "??"
             
             users_text += f"""
-{active_status} {status} @{trader['username'] or 'Нет username'} (ID: {trader['user_id']})
-• Страховой: {trader['insurance_deposit']} USDT
-• Рабочий: {trader['working_deposit']} USDT
-• Депозит подтвержден: {'Да' if trader['insurance_deposit_confirmed'] else 'Нет'}
-• Активен: {'Да' if trader['is_active'] else 'Нет'}
+{active_status} {status} @{trader['username'] or 'пїЅпїЅпїЅ username'} (ID: {trader['user_id']})
+пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {trader['insurance_deposit']} USDT
+пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {trader['working_deposit']} USDT
+пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {'пїЅпїЅ' if trader['insurance_deposit_confirmed'] else 'пїЅпїЅпїЅ'}
+пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {'пїЅпїЅ' if trader['is_active'] else 'пїЅпїЅпїЅ'}
 """
         
         keyboard = types.InlineKeyboardMarkup(row_width=2)
         keyboard.add(
             types.InlineKeyboardButton(
-                "? Подтвердить страховой депозит",
+                "? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ",
                 callback_data="confirm_deposit_menu"
             ),
             types.InlineKeyboardButton(
-                "?? Подтвердить рабочий депозит",
+                "?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ",
                 callback_data="confirm_working_deposit_menu"
             )
         )
@@ -433,7 +433,7 @@ async def manage_users(message: types.Message):
         await message.answer(users_text, reply_markup=keyboard)
 
 async def confirm_deposit_menu_callback(callback_query: types.CallbackQuery):
-    """Меню подтверждения депозита"""
+    """пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"""
     async with db.pool.acquire() as conn:
         traders = await conn.fetch('''
             SELECT user_id, username, telegram_id, insurance_deposit
@@ -443,7 +443,7 @@ async def confirm_deposit_menu_callback(callback_query: types.CallbackQuery):
         ''')
         
         if not traders:
-            await callback_query.answer("? Нет трейдеров для подтверждения")
+            await callback_query.answer("? пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
             return
         
         keyboard = types.InlineKeyboardMarkup(row_width=2)
@@ -456,12 +456,12 @@ async def confirm_deposit_menu_callback(callback_query: types.CallbackQuery):
             )
         
         await callback_query.message.answer(
-            "?? Выберите трейдера для подтверждения депозита:",
+            "?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:",
             reply_markup=keyboard
         )
 
 async def confirm_working_deposit_menu_callback(callback_query: types.CallbackQuery):
-    """Меню подтверждения рабочего депозита"""
+    """пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"""
     async with db.pool.acquire() as conn:
         traders = await conn.fetch('''
             SELECT user_id, username, telegram_id, working_deposit
@@ -471,7 +471,7 @@ async def confirm_working_deposit_menu_callback(callback_query: types.CallbackQu
         ''')
 
         if not traders:
-            await callback_query.answer("? Нет трейдеров для подтверждения")
+            await callback_query.answer("? пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
             return
 
         keyboard = types.InlineKeyboardMarkup(row_width=2)
@@ -484,71 +484,71 @@ async def confirm_working_deposit_menu_callback(callback_query: types.CallbackQu
             )
 
         await callback_query.message.answer(
-            "?? Выберите трейдера для подтверждения рабочего депозита:",
+            "?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:",
             reply_markup=keyboard
         )
 
 async def confirm_working_deposit_callback(callback_query: types.CallbackQuery):
-    """Подтвердить рабочий депозит трейдера"""
+    """пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"""
     try:
         data = callback_query.data
         if not data.startswith('confirm_working_deposit_'):
-            await callback_query.answer("? Неверный формат запроса")
+            await callback_query.answer("? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
             return
 
         trader_id = int(data.split('_')[3])
 
         async with db.pool.acquire() as conn:
-            # Получаем данные трейдера
+            # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             trader = await conn.fetchrow(
                 "SELECT telegram_id, username, working_deposit FROM users WHERE user_id = $1",
                 trader_id
             )
 
             if not trader:
-                await callback_query.answer("? Трейдер не найден")
+                await callback_query.answer("? пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ")
                 return
 
-            # Отправляем уведомление трейдеру
+            # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             if trader and trader['telegram_id']:
                 try:
                     await callback_query.bot.send_message(
                         trader['telegram_id'],
-                        f"?? *ВАЖНОЕ УВЕДОМЛЕНИЕ!*\n\n"
-                        f"? Ваш рабочий депозит подтвержден владельцем!\n\n"
-                        f"?? Сумма: {trader['working_deposit']} USDT\n\n"
-                        f"Теперь вы можете использовать эти средства для работы.\n"
-                        f"?? По вопросам обращайтесь к владельцу.",
+                        f"?? *пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!*\n\n"
+                        f"? пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!\n\n"
+                        f"?? пїЅпїЅпїЅпїЅпїЅ: {trader['working_deposit']} USDT\n\n"
+                        f"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.\n"
+                        f"?? пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.",
                         parse_mode="Markdown"
                     )
                 except Exception as e:
-                    print(f"Не удалось отправить уведомление трейдеру: {e}")
+                    print(f"пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {e}")
 
-            await callback_query.answer(f"? Рабочий депозит подтвержден")
+            await callback_query.answer(f"? пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
 
-            # Обновляем информацию о пользователях
+            # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             await manage_users(callback_query.message)
 
     except (ValueError, IndexError) as e:
         print(f"Error in confirm_working_deposit_callback: {e}")
-        await callback_query.answer("? Ошибка: неверный формат ID трейдера")
+        await callback_query.answer("? пїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ ID пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
     except Exception as e:
         print(f"Error in confirm_working_deposit_callback: {e}")
-        await callback_query.answer("? Ошибка подтверждения")
+        await callback_query.answer("? пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
 
 async def confirm_deposit_callback(callback_query: types.CallbackQuery):
-    """Подтвердить депозит трейдера"""
+    """пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"""
     try:
-        # Правильно парсим callback_data: "confirm_deposit_123"
+        # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ callback_data: "confirm_deposit_123"
         data = callback_query.data
         if not data.startswith('confirm_deposit_'):
-            await callback_query.answer("? Неверный формат запроса")
+            await callback_query.answer("? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
             return
         
         trader_id = int(data.split('_')[2])
         
         async with db.pool.acquire() as conn:
-            # Подтверждаем депозит и активируем пользователя
+            # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             await conn.execute(
                 '''
                 UPDATE users 
@@ -561,30 +561,30 @@ async def confirm_deposit_callback(callback_query: types.CallbackQuery):
                 trader_id
             )
             
-            # Получаем данные трейдера для уведомления
+            # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             trader = await conn.fetchrow(
                 "SELECT telegram_id, username FROM users WHERE user_id = $1",
                 trader_id
             )
             
             if trader and trader['telegram_id']:
-                # Отправляем уведомление трейдеру
+                # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 try:
                     await callback_query.bot.send_message(
                         trader['telegram_id'],
-                        f"?? *ВАЖНОЕ УВЕДОМЛЕНИЕ!*\n\n"
-                        f"? Ваш страховой депозит подтвержден владельцем!\n\n"
-                        f"Теперь вы можете начать работу в системе:\n"
-                        f"1. Добавьте реквизиты через меню '?? Мои реквизиты'\n"
-                        f"2. Ожидайте заявок от операторов\n"
-                        f"3. Подтверждайте поступление средств\n\n"
-                        f"?? По вопросам обращайтесь к владельцу.",
+                        f"?? *пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!*\n\n"
+                        f"? пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!\n\n"
+                        f"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ:\n"
+                        f"1. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ '?? пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ'\n"
+                        f"2. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ\n"
+                        f"3. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ\n\n"
+                        f"?? пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.",
                         parse_mode="Markdown"
                     )
                 except Exception as e:
-                    print(f"Не удалось отправить уведомление трейдеру: {e}")
+                    print(f"пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {e}")
             
-            # Обновляем информацию о пользователях для отображения
+            # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             traders = await conn.fetch('''
                 SELECT user_id, username, telegram_id, 
                        insurance_deposit, working_deposit,
@@ -594,29 +594,29 @@ async def confirm_deposit_callback(callback_query: types.CallbackQuery):
                 ORDER BY created_at DESC
             ''')
             
-            users_text = "?? Список трейдеров:\n\n"
+            users_text = "?? пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:\n\n"
             
             for trader_data in traders:
                 status = "?" if trader_data['insurance_deposit_confirmed'] else "?"
                 active_status = "??" if trader_data['is_active'] else "??"
                 
                 users_text += f"""
-{active_status} {status} @{trader_data['username'] or 'Нет username'} (ID: {trader_data['user_id']})
-• Страховой: {trader_data['insurance_deposit']} USDT
-• Рабочий: {trader_data['working_deposit']} USDT
-• Депозит подтвержден: {'Да' if trader_data['insurance_deposit_confirmed'] else 'Нет'}
-• Активен: {'Да' if trader_data['is_active'] else 'Нет'}
+{active_status} {status} @{trader_data['username'] or 'пїЅпїЅпїЅ username'} (ID: {trader_data['user_id']})
+пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {trader_data['insurance_deposit']} USDT
+пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {trader_data['working_deposit']} USDT
+пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {'пїЅпїЅ' if trader_data['insurance_deposit_confirmed'] else 'пїЅпїЅпїЅ'}
+пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {'пїЅпїЅ' if trader_data['is_active'] else 'пїЅпїЅпїЅ'}
 """
             
             keyboard = types.InlineKeyboardMarkup()
             keyboard.add(
                 types.InlineKeyboardButton(
-                    "? Подтвердить депозит", 
+                    "? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ", 
                     callback_data="confirm_deposit_menu"
                 )
             )
             
-            await callback_query.answer(f"? Депозит подтвержден и аккаунт активирован")
+            await callback_query.answer(f"? пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
             await callback_query.message.edit_text(
                 f"{users_text}",
                 reply_markup=keyboard
@@ -624,25 +624,25 @@ async def confirm_deposit_callback(callback_query: types.CallbackQuery):
             
     except (ValueError, IndexError) as e:
         print(f"Error in confirm_deposit_callback: {e}")
-        await callback_query.answer("? Ошибка: неверный формат ID трейдера")
+        await callback_query.answer("? пїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ ID пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
     except Exception as e:
         print(f"Error in confirm_deposit_callback: {e}")
-        await callback_query.answer("? Ошибка подтверждения")
+        await callback_query.answer("? пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
 
 async def delete_specific_deal_start(message: types.Message, state: FSMContext):
-    """Начать удаление конкретной сделки"""
+    """пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ"""
     await state.set_state(OwnerStates.deleting_deal.state)
     await message.answer(
-        "??? Введите номер сделки для удаления:\n"
-        "Пример: D202501011234",
+        "??? пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:\n"
+        "пїЅпїЅпїЅпїЅпїЅпїЅ: D202501011234",
         reply_markup=get_back_button()
     )
 
 async def delete_specific_deal(message: types.Message, state: FSMContext):
-    """Удалить конкретную сделку"""
-    if message.text == "?? Назад":
+    """пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ"""
+    if message.text == "?? пїЅпїЅпїЅпїЅпїЅ":
         await state.clear()
-        await message.answer("Главное меню:", reply_markup=get_main_menu('owner'))
+        await message.answer("пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ:", reply_markup=get_main_menu('owner'))
         return
     
     deal_number = message.text.strip()
@@ -654,7 +654,7 @@ async def delete_specific_deal(message: types.Message, state: FSMContext):
         )
         
         if not deal:
-            await message.answer("? Сделка не найдена")
+            await message.answer("? пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
             return
         
         await conn.execute(
@@ -662,47 +662,47 @@ async def delete_specific_deal(message: types.Message, state: FSMContext):
             deal['deal_id']
         )
         
-        await message.answer(f"? Сделка #{deal_number} удалена")
+        await message.answer(f"? пїЅпїЅпїЅпїЅпїЅпїЅ #{deal_number} пїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
     
     await state.clear()
 
-# ============== ОБРАБОТЧИК КНОПКИ НАЗАД ==============
+# ============== пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ ==============
 async def handle_back_from_tokens(message: types.Message, state: FSMContext):
     """Handle back button from token management"""
     await state.clear()
-    await message.answer("Главное меню:", reply_markup=get_main_menu('owner'))
+    await message.answer("пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ:", reply_markup=get_main_menu('owner'))
 
-# ============== РЕГИСТРАЦИЯ ОБРАБОТЧИКОВ ==============
+# ============== пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ==============
 def register_owner_handlers(router: Router)::
-    # Статистика
-    router.message.register(show_owner_stats_menu, F.text == "?? Общая статистика")
-    router.message.register(show_stats_by_period, F.text == "?? Общая статистика", state="*")
+    # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+    router.message.register(show_owner_stats_menu, F.text == "?? пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
+    router.message.register(show_stats_by_period, F.text == "?? пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", state="*")
     
-    # Управление токенами
-    router.message.register(manage_tokens_start, F.text == "?? Управление токенами")
-    router.message.register(create_token_start, F.text == "?? Создать токен", state="*")
+    # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+    router.message.register(manage_tokens_start, F.text == "?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
+    router.message.register(create_token_start, F.text == "?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ", state="*")
     router.message.register(process_token_role, state=OwnerStates.waiting_token_role)
-    router.message.register(list_tokens, F.text == "?? Список токенов")
-    router.message.register(deactivate_token_start, F.text == "? Деактивировать токен", state="*")
+    router.message.register(list_tokens, F.text == "?? пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
+    router.message.register(deactivate_token_start, F.text == "? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ", state="*")
     router.message.register(process_deactivate_token, state=OwnerStates.deactivating_token)
     
-    # Управление курсом
-    router.message.register(manage_exchange_rate, F.text == "?? Курс USDT")
-    router.message.register(set_rate_manual_start, F.text == "?? Установить курс", state="*")
+    # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+    router.message.register(manage_exchange_rate, F.text == "?? пїЅпїЅпїЅпїЅ USDT")
+    router.message.register(set_rate_manual_start, F.text == "?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ", state="*")
     router.message.register(process_manual_rate, state=OwnerStates.setting_exchange_rate)
-    router.message.register(auto_update_rate, F.text == "?? Автообновление курса")
+    router.message.register(auto_update_rate, F.text == "?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ")
     
-    # Управление пользователями
-    router.message.register(manage_users, F.text == "?? Управление пользователями")
+    # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+    router.message.register(manage_users, F.text == "?? пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
     
-    # Удаление сделок
-    router.message.register(delete_specific_deal_start, F.text == "??? Удалить сделку", state="*")
+    # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+    router.message.register(delete_specific_deal_start, F.text == "??? пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ", state="*")
     router.message.register(delete_specific_deal, state=OwnerStates.deleting_deal)
     
-    # Кнопка "Назад"
-    router.message.register(handle_back_from_tokens, F.text == "?? Назад", state="*")
+    # пїЅпїЅпїЅпїЅпїЅпїЅ "пїЅпїЅпїЅпїЅпїЅ"
+    router.message.register(handle_back_from_tokens, F.text == "?? пїЅпїЅпїЅпїЅпїЅ", state="*")
     
-    # Callback хэндлеры
+    # Callback пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     router.callback_query.register(
         update_rate_auto_callback, 
         lambda c: c.data == "update_rate_auto"
