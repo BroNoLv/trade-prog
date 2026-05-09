@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 from aiogram import Bot, Dispatcher, Router
-from aiogram.exceptions import NetworkError
+from aiogram.exceptions import TelegramNetworkError as NetworkError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiohttp import web
 
