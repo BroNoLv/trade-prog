@@ -31,6 +31,7 @@ async def start_command(message: types.Message, state: FSMContext):
 async def process_token(message: types.Message, state: FSMContext):
     """Process entered token"""
     token = message.text.strip()
+    print(f"🔍 Проверяем токен: {token} от пользователя {message.from_user.id}")
     logger.info(f"🔍 Проверяем токен: {token} от пользователя {message.from_user.id}")
     
     user = await AuthService.authenticate_user(
@@ -39,9 +40,11 @@ async def process_token(message: types.Message, state: FSMContext):
         message.from_user.username
     )
     
+    print(f"📋 Результат авторизации: {user}")
     logger.info(f"📋 Результат авторизации: {user}")
     
     if not user:
+        print("❌ Токен не найден в БД")
         logger.info("❌ Токен не найден в БД")
         await message.answer("❌ Неверный токен. Попробуйте еще раз:")
         return
