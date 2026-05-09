@@ -37,6 +37,7 @@ async def create_initial_tokens():
             tokens = await conn.fetch("SELECT role, token FROM tokens WHERE is_active = TRUE")
             for token in tokens:
                 print(f"   {token['role'].upper()}: {token['token']}")
+                print(f"🔑 EXISTING TOKEN FOR {token['role'].upper()}: {token['token']}")  # Для видимости в логах Render
         else:
             print("🔑 Активных токенов не найдено, создаем новые...")
             
@@ -53,6 +54,7 @@ async def create_initial_tokens():
             print("✅ Токены созданы:")
             for role, token in tokens_data:
                 print(f"   {role}: {token}")
+                print(f"🔑 TOKEN FOR {role}: {token}")  # Для видимости в логах Render
         
         await conn.close()
         print("👋 Работа завершена")
