@@ -681,15 +681,15 @@ def register_owner_handlers(router: Router):
     # ���������� ��������
     router.message.register(manage_tokens_start, F.text == "?? ���������� ��������")
     router.message.register(create_token_start, F.text == "?? ������� �����", )
-    router.message.register(process_token_role, waiting_token_role)
+    router.message.register(process_token_role, OwnerStates.waiting_token_role)
     router.message.register(list_tokens, F.text == "?? ������ �������")
     router.message.register(deactivate_token_start, F.text == "? �������������� �����", )
-    router.message.register(process_deactivate_token, deactivating_token)
+    router.message.register(process_deactivate_token, OwnerStates.deactivating_token)
     
     # ���������� ������
     router.message.register(manage_exchange_rate, F.text == "?? ���� USDT")
     router.message.register(set_rate_manual_start, F.text == "?? ���������� ����", )
-    router.message.register(process_manual_rate, setting_exchange_rate)
+    router.message.register(process_manual_rate, OwnerStates.setting_exchange_rate)
     router.message.register(auto_update_rate, F.text == "?? �������������� �����")
     
     # ���������� ��������������
@@ -697,7 +697,7 @@ def register_owner_handlers(router: Router):
     
     # �������� ������
     router.message.register(delete_specific_deal_start, F.text == "??? ������� ������", )
-    router.message.register(delete_specific_deal, deleting_deal)
+    router.message.register(delete_specific_deal, OwnerStates.deleting_deal)
     
     # ������ "�����"
     router.message.register(handle_back_from_tokens, F.text == "?? �����", )
