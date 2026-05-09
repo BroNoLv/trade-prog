@@ -3,6 +3,7 @@ from aiogram.types import Message
 from aiogram import BaseMiddleware
 from aiogram.exceptions import TelegramAPIError
 from services.auth_service import AuthService
+from handlers.common import AuthStates
 
 class AccessMiddleware(BaseMiddleware):
     """Middleware для проверки доступа трейдера к функционалу"""
@@ -15,6 +16,16 @@ class AccessMiddleware(BaseMiddleware):
         # Разрешаем кнопку "Назад" всегда
         if event.text == "🔙 Назад":
             return await handler(event, data)
+        
+        # Пропускаем ввод токена (пользователь еще не авторизован)
+        # Проверяем, находится ли пользователь в состоянии ожидания токена
+        # Это позволяет вводить токен даже если пользователь уже существует в БД
+        from aiogram.fsm.context import FSMContext
+        state = data.get('state')
+        if state:
+            current_state = await state.get_state()
+            if current_state == AuthStates.waiting_for_token.state:
+                return await handler(event, data)
         
         # Получаем данные пользователя
         user_data = await AuthService.get_user_data(event.from_user.id)
