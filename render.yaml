@@ -3,6 +3,7 @@ services:
     name: p2p-exchange-bot
     env: python
     plan: free
+    runtime: python3.11
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
     envVars:
