@@ -1,17 +1,20 @@
 ﻿from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
 from services.auth_service import AuthService
 from keyboards.menus import get_main_menu
 from config.settings import config
 
-class AuthStates(StatesGroup):
-    waiting_for_token = State()
-
 async def start_command(message: types.Message, state: FSMContext):
-    """Start command - ask for token"""
-    await state.set_state(AuthStates.waiting_for_token)
-
+    """Handle /start command"""
+    user_data = await AuthService.get_user_data(message.from_user.id)
+    
+    if user_data:
+        role = user_data['role']
+        deposit_confirmed = user_data.get('insurance_deposit_confirmed', True) if role == "trader" else True
+        await state.clear()
+        await message.answer("Главное меню:", reply_markup=get_main_menu(role, deposit_confirmed))
+        return
+    
     welcome_text = """
 🎉 Добро пожаловать в P2P Exchange Bot!
 
@@ -27,13 +30,17 @@ async def start_command(message: types.Message, state: FSMContext):
         "🔐 Введите ваш токен для доступа к системе:",
         reply_markup=types.ReplyKeyboardRemove()
     )
-    await state.set_state(AuthStates.waiting_for_token)
 
 async def process_token(message: types.Message, state: FSMContext):
-    """Process entered token"""
+    """Process entered token - simple handler without FSM"""
     token = message.text.strip()
+    
+    # Проверяем, что это выглядит как токен (16 символов)
+    if len(token) != 16 or not token.isalnum():
+        # Не токен, пропускаем
+        return
+    
     print(f"🔍 Проверяем токен: {token} от пользователя {message.from_user.id}")
-    logger.info(f"🔍 Проверяем токен: {token} от пользователя {message.from_user.id}")
     
     user = await AuthService.authenticate_user(
         token, 
@@ -42,11 +49,9 @@ async def process_token(message: types.Message, state: FSMContext):
     )
     
     print(f"📋 Результат авторизации: {user}")
-    logger.info(f"📋 Результат авторизации: {user}")
     
     if not user:
         print("❌ Токен не найден в БД")
-        logger.info("❌ Токен не найден в БД")
         await message.answer("❌ Неверный токен. Попробуйте еще раз:")
         return
     
@@ -55,8 +60,6 @@ async def process_token(message: types.Message, state: FSMContext):
     role = user['role']
     is_active = user.get('is_active', True)
     insurance_confirmed = user.get('insurance_deposit_confirmed', True)
-    
-    logger.info(f"👤 Данные пользователя: role={role}, is_active={is_active}, insurance_confirmed={insurance_confirmed}")
     
     role_names = {
         "owner": "Владелец",
@@ -73,7 +76,6 @@ async def process_token(message: types.Message, state: FSMContext):
     
     if role == "trader":
         if not insurance_confirmed:
-            logger.info("❌ Трейдер без подтвержденного депозита - доступ запрещен")
             welcome_message += f"""
             
 ⚠️ ВНИМАНИЕ:
@@ -88,7 +90,6 @@ async def process_token(message: types.Message, state: FSMContext):
 Вы можете проверить статус в "Личном кабинете".
             """
         elif not is_active:
-            logger.info("❌ Трейдер деактивирован - доступ запрещен")
             welcome_message += f"""
             
 ⚠️ Ваш аккаунт деактивирован.
@@ -124,4 +125,5 @@ def register_common_handlers(router: Router):
     router.message.register(logout_command, F.text == "/logout")
     router.message.register(logout_command, F.text == "🚪 Выйти")
     router.message.register(back_to_main, F.text == "🔙 Назад")
-    router.message.register(process_token, AuthStates.waiting_for_token)
+    # Регистрируем обработчик токена для всех сообщений (будет фильтровать внутри)
+    router.message.register(process_token)
