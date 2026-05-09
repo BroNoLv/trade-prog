@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: p2p-exchange-bot
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: OWNER_WALLET_ADDRESS
+        sync: false
+      - key: PORT
+        value: 8080
+    healthCheckPath: /health
+    autoDeploy: true
