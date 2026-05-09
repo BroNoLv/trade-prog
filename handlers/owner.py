@@ -676,31 +676,31 @@ async def handle_back_from_tokens(message: types.Message, state: FSMContext):
 def register_owner_handlers(router: Router):
     # ����������
     router.message.register(show_owner_stats_menu, F.text == "?? ����� ����������")
-    router.message.register(show_stats_by_period, F.text == "?? ����� ����������", state="*")
+    router.message.register(show_stats_by_period, F.text == "?? ����� ����������", )
     
     # ���������� ��������
     router.message.register(manage_tokens_start, F.text == "?? ���������� ��������")
-    router.message.register(create_token_start, F.text == "?? ������� �����", state="*")
-    router.message.register(process_token_role, state=OwnerStates.waiting_token_role)
+    router.message.register(create_token_start, F.text == "?? ������� �����", )
+    router.message.register(process_token_role, waiting_token_role)
     router.message.register(list_tokens, F.text == "?? ������ �������")
-    router.message.register(deactivate_token_start, F.text == "? �������������� �����", state="*")
-    router.message.register(process_deactivate_token, state=OwnerStates.deactivating_token)
+    router.message.register(deactivate_token_start, F.text == "? �������������� �����", )
+    router.message.register(process_deactivate_token, deactivating_token)
     
     # ���������� ������
     router.message.register(manage_exchange_rate, F.text == "?? ���� USDT")
-    router.message.register(set_rate_manual_start, F.text == "?? ���������� ����", state="*")
-    router.message.register(process_manual_rate, state=OwnerStates.setting_exchange_rate)
+    router.message.register(set_rate_manual_start, F.text == "?? ���������� ����", )
+    router.message.register(process_manual_rate, setting_exchange_rate)
     router.message.register(auto_update_rate, F.text == "?? �������������� �����")
     
     # ���������� ��������������
     router.message.register(manage_users, F.text == "?? ���������� ��������������")
     
     # �������� ������
-    router.message.register(delete_specific_deal_start, F.text == "??? ������� ������", state="*")
-    router.message.register(delete_specific_deal, state=OwnerStates.deleting_deal)
+    router.message.register(delete_specific_deal_start, F.text == "??? ������� ������", )
+    router.message.register(delete_specific_deal, deleting_deal)
     
     # ������ "�����"
-    router.message.register(handle_back_from_tokens, F.text == "?? �����", state="*")
+    router.message.register(handle_back_from_tokens, F.text == "?? �����", )
     
     # Callback ��������
     router.callback_query.register(
@@ -710,7 +710,7 @@ def register_owner_handlers(router: Router):
     router.callback_query.register(
         set_rate_manual_callback, 
         lambda c: c.data == "set_rate_manual",
-        state="*"
+        
     )
     router.callback_query.register(
         delete_deals_callback,

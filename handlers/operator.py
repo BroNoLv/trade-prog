@@ -356,11 +356,11 @@ async def process_transaction_search(message: types.Message, state: FSMContext):
 
 def register_operator_handlers(router: Router):
     router.message.register(create_deal_start, F.text == "? ������� ������")
-    router.message.register(process_deal_amount, state=OperatorStates.waiting_deal_amount)
+    router.message.register(process_deal_amount, OperatorStates.waiting_deal_amount)
     router.message.register(show_operator_stats, F.text == "?? ����������")
     router.message.register(search_transactions_start, F.text == "?? ����� ����������")
     router.message.register(show_active_deals_operator, F.text == "?? �������� ������")
-    router.message.register(process_transaction_search, state=OperatorStates.searching_transaction)
+    router.message.register(process_transaction_search, OperatorStates.searching_transaction)
     
     router.callback_query.register(
         handle_dispute_callback,
