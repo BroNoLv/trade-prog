@@ -354,7 +354,7 @@ async def process_transaction_search(message: types.Message, state: FSMContext):
     await state.clear()
     await message.answer("?? ����� ��������", reply_markup=get_main_menu('operator'))
 
-def register_operator_handlers(router: Router)::
+def register_operator_handlers(router: Router):
     router.message.register(create_deal_start, F.text == "? ������� ������")
     router.message.register(process_deal_amount, state=OperatorStates.waiting_deal_amount)
     router.message.register(show_operator_stats, F.text == "?? ����������")
