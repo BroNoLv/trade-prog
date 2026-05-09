@@ -5,15 +5,35 @@ class AuthService:
     @staticmethod
     async def authenticate_user(token: str, telegram_id: int, username: str = None):
         """Authenticate user by token and return user data"""
+        print(f"🔍 AuthService: проверяем токен '{token}' для пользователя {telegram_id}")
+        
         async with db.pool.acquire() as conn:
-            # Find token (только активные токены)
-            token_data = await conn.fetchrow(
-                "SELECT * FROM tokens WHERE token = $1 AND is_active = TRUE",
-                token
-            )
+            # Проверяем, существует ли таблица tokens
+            try:
+                token_data = await conn.fetchrow(
+                    "SELECT * FROM tokens WHERE token = $1 AND is_active = TRUE",
+                    token
+                )
+                print(f"📋 AuthService: результат поиска токена: {token_data}")
+            except Exception as e:
+                print(f"❌ AuthService: ошибка при поиске токена: {e}")
+                # Пробуем создать таблицу
+                await conn.execute("""
+                    CREATE TABLE IF NOT EXISTS tokens (
+                        id SERIAL PRIMARY KEY,
+                        token VARCHAR(16) UNIQUE NOT NULL,
+                        role VARCHAR(20) NOT NULL,
+                        is_active BOOLEAN DEFAULT TRUE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                return None
             
             if not token_data:
+                print(f"❌ AuthService: токен '{token}' не найден в БД")
                 return None
+            
+            print(f"✅ AuthService: токен найден, роль: {token_data['role']}")
             
             # Check if user exists
             user = await conn.fetchrow(

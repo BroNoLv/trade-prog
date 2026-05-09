@@ -70,6 +70,17 @@ async def initialize_tokens():
     try:
         print("🔄 Начинаю инициализацию токенов...")
         async with db.pool.acquire() as conn:
+            # Создаем таблицу tokens если не существует
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS tokens (
+                    id SERIAL PRIMARY KEY,
+                    token VARCHAR(16) UNIQUE NOT NULL,
+                    role VARCHAR(20) NOT NULL,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
             # Удаляем все старые токены и создаем новые
             logger.info("🔄 Пересоздаем токены...")
             print("🔄 Удаляем старые токены...")
