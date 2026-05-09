@@ -3,8 +3,7 @@ import logging
 import os
 import sys
 from aiogram import Bot, Dispatcher
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.utils.exceptions import NetworkError
+from aiogram.exceptions import NetworkError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiohttp import web
 
@@ -121,11 +120,11 @@ async def main():
     global bot_instance
     bot_instance = bot
     
-    storage = MemoryStorage()
-    dp = Dispatcher(bot, storage=storage)
+    dp = Dispatcher()
     
     # Add middleware
-    dp.middleware.setup(AccessMiddleware())
+    dp.message.middleware(AccessMiddleware())
+    dp.callback_query.middleware(AccessMiddleware())
     
     # Initialize scheduler
     scheduler = AsyncIOScheduler()
@@ -153,17 +152,16 @@ async def main():
     # Start bot
     try:
         logger.info("🤖 Бот запущен успешно!")
-        await dp.start_polling()
+        await bot.delete_webhook(drop_pending_updates=True)
+        await dp.start_polling(bot)
     except NetworkError as e:
         logger.error(f"❌ Ошибка сети: {e}")
         logger.error("Проверьте подключение к интернету и настройки прокси")
     except Exception as e:
         logger.error(f"❌ Неожиданная ошибка: {e}")
     finally:
-        # Правильное закрытие сессии для aiogram 2.x
+        # Правильное закрытие сессии для aiogram 3.x
         try:
-            await dp.storage.close()
-            await dp.storage.wait_closed()
             session = await bot.get_session()
             await session.close()
             logger.info("👋 Бот остановлен корректно")
