@@ -83,6 +83,12 @@ async def initialize_tokens():
             logger.info("✅ Новые токены созданы:")
             for role, token in tokens_data:
                 logger.info(f"🔑 TOKEN FOR {role}: {token}")
+            
+            # Проверяем, что токены сохранились
+            saved_tokens = await conn.fetch("SELECT role, token FROM tokens WHERE is_active = TRUE")
+            logger.info(f"📋 Всего в БД сохранено токенов: {len(saved_tokens)}")
+            for token in saved_tokens:
+                logger.info(f"🔑 SAVED TOKEN FOR {token['role'].upper()}: {token['token']}")
                     
     except Exception as e:
         logger.error(f"❌ Ошибка при инициализации токенов: {e}")
@@ -169,7 +175,9 @@ async def main():
         logger.info("✅ База данных подключена успешно")
         
         # Initialize tokens if needed
+        logger.info("🔄 Начинаю инициализацию токенов...")
         await initialize_tokens()
+        logger.info("✅ Инициализация токенов завершена")
         
     except Exception as e:
         logger.error(f"❌ Ошибка подключения к базе данных: {e}")
