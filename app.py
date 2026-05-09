@@ -6,6 +6,7 @@ from aiogram import Bot, Dispatcher, Router
 from aiogram.exceptions import TelegramNetworkError as NetworkError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiohttp import web
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
 from config.settings import config
 from database.models import db
@@ -208,19 +209,42 @@ async def main():
     # Include router in dispatcher
     dp.include_router(router)
     
-    # Start HTTP server for health checks (Render wake-on-webhook)
-    await start_http_server()
-    
-    # Start bot
+    # Start bot with webhook (Render compatible)
     try:
-        logger.info("🤖 Бот запущен успешно!")
-        # Удаляем webhook и сбрасываем обновления перед polling
+        logger.info("🤖 Настраиваем webhook...")
+        
+        # Webhook URL на Render
+        WEBHOOK_HOST = "https://trade-prog-2.onrender.com"
+        WEBHOOK_PATH = "/webhook"
+        WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
+        
+        # Удаляем старый webhook и устанавливаем новый
         await bot.delete_webhook(drop_pending_updates=True)
-        logger.info("✅ Webhook удален, начинаем polling")
-        await dp.start_polling(bot)
+        await bot.set_webhook(WEBHOOK_URL)
+        logger.info(f"✅ Webhook установлен: {WEBHOOK_URL}")
+        
+        # Настраиваем aiohttp приложение
+        webhook_requests_handler = SimpleRequestHandler(
+            dispatcher=dp,
+            bot=bot,
+        )
+        webhook_requests_handler.register(app, path=WEBHOOK_PATH)
+        setup_application(app, dp, bot=bot)
+        
+        # Запускаем HTTP сервер
+        runner = web.AppRunner(app)
+        await runner.setup()
+        site = web.TCPSite(runner, '0.0.0.0', config.PORT)
+        await site.start()
+        
+        logger.info(f"🌐 Сервер запущен на порту {config.PORT}")
+        logger.info("🤖 Бот работает через webhook")
+        
+        # Держим сервер активным
+        await asyncio.Event().wait()
+        
     except NetworkError as e:
         logger.error(f"❌ Ошибка сети: {e}")
-        logger.error("Проверьте подключение к интернету и настройки прокси")
     except Exception as e:
         logger.error(f"❌ Неожиданная ошибка: {e}")
     finally:
