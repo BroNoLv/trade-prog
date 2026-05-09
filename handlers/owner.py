@@ -1,6 +1,6 @@
-п»їfrom aiogram import Dispatcher, types
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram import Router, F, types
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 import random
 import string
 import os
@@ -23,19 +23,19 @@ class OwnerStates(StatesGroup):
     confirming_deposit = State()
     confirming_working_deposit = State()
 
-# ============== РЎРўРђРўРРЎРўРРљРђ ==============
+# ============== СТАТИСТИКА ==============
 async def show_owner_stats_menu(message: types.Message):
-    """РњРµРЅСЋ РІС‹Р±РѕСЂР° РїРµСЂРёРѕРґР° СЃС‚Р°С‚РёСЃС‚РёРєРё"""
-    await message.answer("рџ“€ Р’С‹Р±РµСЂРёС‚Рµ РїРµСЂРёРѕРґ РґР»СЏ СЃС‚Р°С‚РёСЃС‚РёРєРё:", reply_markup=get_stats_period_menu())
+    """Меню выбора периода статистики"""
+    await message.answer("?? Выберите период для статистики:", reply_markup=get_stats_period_menu())
 
 async def show_stats_by_period(message: types.Message):
-    """РџРѕРєР°Р·Р°С‚СЊ РѕР±С‰СѓСЋ СЃС‚Р°С‚РёСЃС‚РёРєСѓ"""
-    await show_stats_with_filter(message, "", "Р·Р° РІСЃРµ РІСЂРµРјСЏ")
+    """Показать общую статистику"""
+    await show_stats_with_filter(message, "", "за все время")
 
 async def process_stats_start_date(message: types.Message, state: FSMContext):
-    """РћР±СЂР°Р±РѕС‚Р°С‚СЊ РЅР°С‡Р°Р»СЊРЅСѓСЋ РґР°С‚Сѓ"""
-    if message.text == "рџ”™ РќР°Р·Р°Рґ":
-        await state.finish()
+    """Обработать начальную дату"""
+    if message.text == "?? Назад":
+        await state.clear()
         await show_owner_stats_menu(message)
         return
     
@@ -44,17 +44,17 @@ async def process_stats_start_date(message: types.Message, state: FSMContext):
         await state.update_data(start_date=start_date)
         await OwnerStates.waiting_stats_end_date.set()
         await message.answer(
-            "рџ“… Р’РІРµРґРёС‚Рµ РєРѕРЅРµС‡РЅСѓСЋ РґР°С‚Сѓ РІ С„РѕСЂРјР°С‚Рµ Р”Р”.РњРњ.Р“Р“Р“Р“:\n"
-            "РџСЂРёРјРµСЂ: 31.12.2024",
+            "?? Введите конечную дату в формате ДД.ММ.ГГГГ:\n"
+            "Пример: 31.12.2024",
             reply_markup=get_back_button()
         )
     except ValueError:
-        await message.answer("вќЊ РќРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚ РґР°С‚С‹. РСЃРїРѕР»СЊР·СѓР№С‚Рµ Р”Р”.РњРњ.Р“Р“Р“Р“:")
+        await message.answer("? Неверный формат даты. Используйте ДД.ММ.ГГГГ:")
 
 async def process_stats_end_date(message: types.Message, state: FSMContext):
-    """РћР±СЂР°Р±РѕС‚Р°С‚СЊ РєРѕРЅРµС‡РЅСѓСЋ РґР°С‚Сѓ"""
-    if message.text == "рџ”™ РќР°Р·Р°Рґ":
-        await state.finish()
+    """Обработать конечную дату"""
+    if message.text == "?? Назад":
+        await state.clear()
         await show_owner_stats_menu(message)
         return
 
@@ -64,22 +64,22 @@ async def process_stats_end_date(message: types.Message, state: FSMContext):
         start_date = data.get('start_date')
 
         if end_date < start_date:
-            await message.answer("вќЊ РљРѕРЅРµС‡РЅР°СЏ РґР°С‚Р° РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РїРѕР·Р¶Рµ РЅР°С‡Р°Р»СЊРЅРѕР№:")
+            await message.answer("? Конечная дата должна быть позже начальной:")
             return
 
         date_filter = f"AND d.created_at >= '{start_date.strftime('%Y-%m-%d')}' AND d.created_at <= '{end_date.strftime('%Y-%m-%d 23:59:59')}'"
-        period_text = f"СЃ {start_date.strftime('%d.%m.%Y')} РїРѕ {end_date.strftime('%d.%m.%Y')}"
+        period_text = f"с {start_date.strftime('%d.%m.%Y')} по {end_date.strftime('%d.%m.%Y')}"
 
-        await state.finish()
+        await state.clear()
         await show_stats_with_filter(message, date_filter, period_text)
 
     except ValueError:
-        await message.answer("вќЊ РќРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚ РґР°С‚С‹. РСЃРїРѕР»СЊР·СѓР№С‚Рµ Р”Р”.РњРњ.Р“Р“Р“Р“:")
+        await message.answer("? Неверный формат даты. Используйте ДД.ММ.ГГГГ:")
 
 async def show_stats_with_filter(message: types.Message, date_filter: str, period_text: str):
-    """РџРѕРєР°Р·Р°С‚СЊ СЃС‚Р°С‚РёСЃС‚РёРєСѓ СЃ С„РёР»СЊС‚СЂРѕРј"""
+    """Показать статистику с фильтром"""
     async with db.pool.acquire() as conn:
-        # РЎС‚Р°С‚РёСЃС‚РёРєР° РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№
+        # Статистика пользователей
         user_stats = await conn.fetchrow('''
             SELECT
                 COUNT(*) as total_users,
@@ -88,7 +88,7 @@ async def show_stats_with_filter(message: types.Message, date_filter: str, perio
             FROM users
         ''')
 
-        # РЎС‚Р°С‚РёСЃС‚РёРєР° СЃРґРµР»РѕРє
+        # Статистика сделок
         stats = await conn.fetchrow(f'''
             SELECT
                 COUNT(DISTINCT d.deal_id) as total_deals,
@@ -99,7 +99,7 @@ async def show_stats_with_filter(message: types.Message, date_filter: str, perio
             WHERE 1=1 {date_filter} AND d.is_deleted = FALSE
         ''')
 
-        # РЎС‚Р°С‚РёСЃС‚РёРєР° РїРѕ СЃС‚Р°С‚СѓСЃР°Рј СЃРґРµР»РѕРє
+        # Статистика по статусам сделок
         deal_stats = await conn.fetchrow(f'''
             SELECT
                 COUNT(CASE WHEN status = 'confirmed' THEN 1 END) as confirmed,
@@ -114,32 +114,32 @@ async def show_stats_with_filter(message: types.Message, date_filter: str, perio
         rate = await ExchangeService.get_current_rate()
 
         stats_text = f"""
-рџ“€ РЎС‚Р°С‚РёСЃС‚РёРєР° СЃРёСЃС‚РµРјС‹ ({period_text})
+?? Статистика системы ({period_text})
 
-рџ‘Ґ РџРѕР»СЊР·РѕРІР°С‚РµР»Рё:
-вЂў Р’СЃРµРіРѕ: {user_stats['total_users'] or 0}
-вЂў РўСЂРµР№РґРµСЂРѕРІ: {user_stats['traders'] or 0}
-вЂў РћРїРµСЂР°С‚РѕСЂРѕРІ: {user_stats['operators'] or 0}
+?? Пользователи:
+• Всего: {user_stats['total_users'] or 0}
+• Трейдеров: {user_stats['traders'] or 0}
+• Операторов: {user_stats['operators'] or 0}
 
-рџ’° Р¤РёРЅР°РЅСЃС‹:
-вЂў Р’СЃРµРіРѕ СЃРґРµР»РѕРє: {stats['total_deals'] or 0}
-вЂў РћР±С‰РёР№ РѕР±РѕСЂРѕС‚: {stats['total_rub'] or 0:.2f} RUB
-вЂў Р’ USDT: {stats['total_usdt'] or 0:.2f} USDT
-вЂў РЎСЂРµРґРЅСЏСЏ СЃРґРµР»РєР°: {stats['avg_deal_rub'] or 0:.2f} RUB
-вЂў РўРµРєСѓС‰РёР№ РєСѓСЂСЃ: {rate} RUB/USDT
+?? Финансы:
+• Всего сделок: {stats['total_deals'] or 0}
+• Общий оборот: {stats['total_rub'] or 0:.2f} RUB
+• В USDT: {stats['total_usdt'] or 0:.2f} USDT
+• Средняя сделка: {stats['avg_deal_rub'] or 0:.2f} RUB
+• Текущий курс: {rate} RUB/USDT
 
-рџ“Љ РЎС‚Р°С‚СѓСЃС‹ СЃРґРµР»РѕРє:
-вњ… РџРѕРґС‚РІРµСЂР¶РґРµРЅРѕ: {deal_stats['confirmed'] or 0}
-вЏі Р’ РѕР¶РёРґР°РЅРёРё: {deal_stats['pending'] or 0}
-вќЊ РСЃС‚РµРєР»Рѕ: {deal_stats['expired'] or 0}
-вљ–пёЏ РЎРїРѕСЂРѕРІ: {deal_stats['disputed'] or 0}
-рџљ« РћС‚РєР»РѕРЅРµРЅРѕ: {deal_stats['rejected'] or 0}
+?? Статусы сделок:
+? Подтверждено: {deal_stats['confirmed'] or 0}
+? В ожидании: {deal_stats['pending'] or 0}
+? Истекло: {deal_stats['expired'] or 0}
+?? Споров: {deal_stats['disputed'] or 0}
+?? Отклонено: {deal_stats['rejected'] or 0}
 """
 
         keyboard = types.InlineKeyboardMarkup()
         keyboard.add(
             types.InlineKeyboardButton(
-                "рџ”™ РќР°Р·Р°Рґ",
+                "?? Назад",
                 callback_data="back_to_stats_menu"
             )
         )
@@ -147,66 +147,66 @@ async def show_stats_with_filter(message: types.Message, date_filter: str, perio
         await message.answer(stats_text, reply_markup=keyboard)
 
 async def back_to_stats_menu_callback(callback_query: types.CallbackQuery):
-    """Р’РµСЂРЅСѓС‚СЊСЃСЏ РІ РіР»Р°РІРЅРѕРµ РјРµРЅСЋ РІР»Р°РґРµР»СЊС†Р°"""
+    """Вернуться в главное меню владельца"""
     await callback_query.message.delete()
-    await callback_query.message.answer("Р“Р»Р°РІРЅРѕРµ РјРµРЅСЋ:", reply_markup=get_main_menu('owner'))
+    await callback_query.message.answer("Главное меню:", reply_markup=get_main_menu('owner'))
 
 async def delete_deals_callback(callback_query: types.CallbackQuery):
-    """РЈРґР°Р»РёС‚СЊ СЃРґРµР»РєРё Р·Р° РїРµСЂРёРѕРґ"""
+    """Удалить сделки за период"""
     try:
         data = callback_query.data
         date_filter = data.replace("delete_deals_", "")
         
         async with db.pool.acquire() as conn:
-            # РџРѕРґСЃС‡РёС‚С‹РІР°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ СЃРґРµР»РѕРє РґР»СЏ СѓРґР°Р»РµРЅРёСЏ
+            # Подсчитываем количество сделок для удаления
             count = await conn.fetchrow(f'''
                 SELECT COUNT(*) as count FROM deals
                 WHERE 1=1 {date_filter} AND is_deleted = FALSE
             ''')
             
             if count['count'] == 0:
-                await callback_query.answer("вќЊ РќРµС‚ СЃРґРµР»РѕРє РґР»СЏ СѓРґР°Р»РµРЅРёСЏ")
+                await callback_query.answer("? Нет сделок для удаления")
                 return
             
-            # РџРѕРјРµС‡Р°РµРј СЃРґРµР»РєРё РєР°Рє СѓРґР°Р»РµРЅРЅС‹Рµ
+            # Помечаем сделки как удаленные
             result = await conn.execute(f'''
                 UPDATE deals SET is_deleted = TRUE
                 WHERE 1=1 {date_filter} AND is_deleted = FALSE
             ''')
             
-            await callback_query.answer(f"вњ… РЈРґР°Р»РµРЅРѕ {result.split()[1]} СЃРґРµР»РѕРє")
+            await callback_query.answer(f"? Удалено {result.split()[1]} сделок")
             await callback_query.message.edit_text(
-                f"{callback_query.message.text}\n\nвњ… РЈРґР°Р»РµРЅРѕ {result.split()[1]} СЃРґРµР»РѕРє"
+                f"{callback_query.message.text}\n\n? Удалено {result.split()[1]} сделок"
             )
             
     except Exception as e:
         print(f"Error in delete_deals_callback: {e}")
-        await callback_query.answer("вќЊ РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ")
+        await callback_query.answer("? Ошибка удаления")
 
-# ============== РЈРџР РђР’Р›Р•РќРР• РўРћРљР•РќРђРњР ==============
+# ============== УПРАВЛЕНИЕ ТОКЕНАМИ ==============
 async def manage_tokens_start(message: types.Message):
     """Start token management"""
-    await message.answer("рџ”‘ РЈРїСЂР°РІР»РµРЅРёРµ С‚РѕРєРµРЅР°РјРё:", reply_markup=get_owner_tokens_menu())
+    await message.answer("?? Управление токенами:", reply_markup=get_owner_tokens_menu())
 
 async def create_token_start(message: types.Message, state: FSMContext):
     """Start creating new token"""
     await state.set_state(OwnerStates.waiting_token_role.state)
     await message.answer(
-        "рџ‘Ґ Р’С‹Р±РµСЂРёС‚Рµ СЂРѕР»СЊ РґР»СЏ РЅРѕРІРѕРіРѕ С‚РѕРєРµРЅР°:\n"
-        "Р’РІРµРґРёС‚Рµ 'trader', 'operator' РёР»Рё 'owner'",
+        "?? Выберите роль для нового токена:\n"
+        "Введите 'trader', 'operator' или 'owner'",
         reply_markup=get_back_button()
     )
 
 async def process_token_role(message: types.Message, state: FSMContext):
     """Process token role and generate token"""
-    if message.text == "рџ”™ РќР°Р·Р°Рґ":
-        await state.finish()
+    if message.text == "?? Назад":
+        await state.clear()
         await manage_tokens_start(message)
         return
     
     role = message.text.lower()
     if role not in ['trader', 'operator', 'owner']:
-        await message.answer("вќЊ РќРµРєРѕСЂСЂРµРєС‚РЅР°СЏ СЂРѕР»СЊ. Р’РІРµРґРёС‚Рµ 'trader', 'operator' РёР»Рё 'owner':")
+        await message.answer("? Некорректная роль. Введите 'trader', 'operator' или 'owner':")
         return
     
     # Generate token
@@ -226,18 +226,18 @@ async def process_token_role(message: types.Message, state: FSMContext):
             token, role, user['user_id'] if user else None
         )
     
-    await state.finish()
+    await state.clear()
     await message.answer(
-        f"вњ… РўРѕРєРµРЅ СѓСЃРїРµС€РЅРѕ СЃРѕР·РґР°РЅ!\n\n"
-        f"Р РѕР»СЊ: {role}\n"
-        f"РўРѕРєРµРЅ: `{token}`\n\n"
-        f"вљ пёЏ РЎРѕС…СЂР°РЅРёС‚Рµ СЌС‚РѕС‚ С‚РѕРєРµРЅ! РћРЅ Р±РѕР»СЊС€Рµ РЅРµ Р±СѓРґРµС‚ РїРѕРєР°Р·Р°РЅ.",
+        f"? Токен успешно создан!\n\n"
+        f"Роль: {role}\n"
+        f"Токен: `{token}`\n\n"
+        f"?? Сохраните этот токен! Он больше не будет показан.",
         parse_mode="Markdown",
         reply_markup=get_main_menu('owner')
     )
 
 async def list_tokens(message: types.Message):
-    """Show list of all tokens (С‚РѕР»СЊРєРѕ Р°РєС‚РёРІРЅС‹Рµ)"""
+    """Show list of all tokens (только активные)"""
     async with db.pool.acquire() as conn:
         tokens = await conn.fetch(
             '''
@@ -249,15 +249,15 @@ async def list_tokens(message: types.Message):
         )
         
         if not tokens:
-            await message.answer("рџ“­ РђРєС‚РёРІРЅС‹С… С‚РѕРєРµРЅРѕРІ РЅРµС‚")
+            await message.answer("?? Активных токенов нет")
             return
         
-        tokens_text = "рџ“‹ РЎРїРёСЃРѕРє Р°РєС‚РёРІРЅС‹С… С‚РѕРєРµРЅРѕРІ:\n\n"
+        tokens_text = "?? Список активных токенов:\n\n"
         for token in tokens:
             tokens_text += f"""
 {token['role'].upper()}
-РўРѕРєРµРЅ: `{token['token']}`
-РЎРѕР·РґР°РЅ: {token['created_at'].strftime('%d.%m.%Y %H:%M')}
+Токен: `{token['token']}`
+Создан: {token['created_at'].strftime('%d.%m.%Y %H:%M')}
 """
         
         await message.answer(tokens_text, parse_mode="Markdown")
@@ -266,67 +266,67 @@ async def deactivate_token_start(message: types.Message, state: FSMContext):
     """Start deactivating token"""
     await state.set_state(OwnerStates.deactivating_token.state)
     await message.answer(
-        "вќЊ Р’РІРµРґРёС‚Рµ С‚РѕРєРµРЅ РґР»СЏ РґРµР°РєС‚РёРІР°С†РёРё:",
+        "? Введите токен для деактивации:",
         reply_markup=get_back_button()
     )
 
 async def process_deactivate_token(message: types.Message, state: FSMContext):
-    """Deactivate token (СѓРґР°Р»СЏРµРј РёР· СЃРёСЃС‚РµРјС‹)"""
-    if message.text == "рџ”™ РќР°Р·Р°Рґ":
-        await state.finish()
+    """Deactivate token (удаляем из системы)"""
+    if message.text == "?? Назад":
+        await state.clear()
         await manage_tokens_start(message)
         return
     
     token = message.text.strip()
     
     async with db.pool.acquire() as conn:
-        # РЈРґР°Р»СЏРµРј С‚РѕРєРµРЅ РїРѕР»РЅРѕСЃС‚СЊСЋ
+        # Удаляем токен полностью
         result = await conn.execute(
             "DELETE FROM tokens WHERE token = $1 RETURNING token",
             token
         )
         
         if "0" in str(result):
-            await message.answer("вќЊ РўРѕРєРµРЅ РЅРµ РЅР°Р№РґРµРЅ")
+            await message.answer("? Токен не найден")
         else:
-            await message.answer("вњ… РўРѕРєРµРЅ СѓРґР°Р»РµРЅ РёР· СЃРёСЃС‚РµРјС‹")
+            await message.answer("? Токен удален из системы")
     
-    await state.finish()
-    await message.answer("Р“Р»Р°РІРЅРѕРµ РјРµРЅСЋ:", reply_markup=get_main_menu('owner'))
+    await state.clear()
+    await message.answer("Главное меню:", reply_markup=get_main_menu('owner'))
 
-# ============== РЈРџР РђР’Р›Р•РќРР• РљРЈР РЎРћРњ ==============
+# ============== УПРАВЛЕНИЕ КУРСОМ ==============
 async def manage_exchange_rate(message: types.Message):
     """Manage exchange rate"""
     rate = await ExchangeService.get_current_rate()
     
     keyboard = types.InlineKeyboardMarkup()
     keyboard.row(
-        types.InlineKeyboardButton("рџ“€ РћР±РЅРѕРІРёС‚СЊ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё", callback_data="update_rate_auto"),
-        types.InlineKeyboardButton("вњЏпёЏ РЈСЃС‚Р°РЅРѕРІРёС‚СЊ РІСЂСѓС‡РЅСѓСЋ", callback_data="set_rate_manual")
+        types.InlineKeyboardButton("?? Обновить автоматически", callback_data="update_rate_auto"),
+        types.InlineKeyboardButton("?? Установить вручную", callback_data="set_rate_manual")
     )
     
     await message.answer(
-        f"рџ’± РўРµРєСѓС‰РёР№ РєСѓСЂСЃ USDT: {rate} RUB\n\n"
-        f"Р’С‹Р±РµСЂРёС‚Рµ РґРµР№СЃС‚РІРёРµ:",
+        f"?? Текущий курс USDT: {rate} RUB\n\n"
+        f"Выберите действие:",
         reply_markup=keyboard
     )
 
 async def update_rate_auto_callback(callback_query: types.CallbackQuery):
     """Handle auto rate update callback"""
     try:
-        await callback_query.answer("рџ”„ РћР±РЅРѕРІР»РµРЅРёРµ РєСѓСЂСЃР°...")
+        await callback_query.answer("?? Обновление курса...")
         rate = await ExchangeService.update_rate_automatically()
         
         if rate:
-            await callback_query.message.edit_text(f"вњ… РљСѓСЂСЃ РѕР±РЅРѕРІР»РµРЅ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё: {rate} RUB")
+            await callback_query.message.edit_text(f"? Курс обновлен автоматически: {rate} RUB")
         else:
             await callback_query.message.edit_text(
-                "вќЊ РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ РєСѓСЂСЃ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё\n"
-                "РСЃРїРѕР»СЊР·СѓР№С‚Рµ СЂСѓС‡РЅСѓСЋ СѓСЃС‚Р°РЅРѕРІРєСѓ РєСѓСЂСЃР°"
+                "? Не удалось обновить курс автоматически\n"
+                "Используйте ручную установку курса"
             )
     except Exception as e:
         print(f"Error in update_rate_auto_callback: {e}")
-        await callback_query.message.edit_text(f"вќЊ РћС€РёР±РєР°: {str(e)}")
+        await callback_query.message.edit_text(f"? Ошибка: {str(e)}")
 
 async def set_rate_manual_callback(callback_query: types.CallbackQuery, state: FSMContext):
     """Handle manual rate set callback"""
@@ -334,8 +334,8 @@ async def set_rate_manual_callback(callback_query: types.CallbackQuery, state: F
     await OwnerStates.setting_exchange_rate.set()
     
     await callback_query.message.answer(
-        "рџ’° Р’РІРµРґРёС‚Рµ РЅРѕРІС‹Р№ РєСѓСЂСЃ USDT РІ RUB:\n"
-        "РџСЂРёРјРµСЂ: 95.50",
+        "?? Введите новый курс USDT в RUB:\n"
+        "Пример: 95.50",
         reply_markup=get_back_button()
     )
 
@@ -343,16 +343,16 @@ async def set_rate_manual_start(message: types.Message, state: FSMContext):
     """Start manual rate setting"""
     await state.set_state(OwnerStates.setting_exchange_rate.state)
     await message.answer(
-        "рџ’° Р’РІРµРґРёС‚Рµ РЅРѕРІС‹Р№ РєСѓСЂСЃ USDT РІ RUB:\n"
-        "РџСЂРёРјРµСЂ: 95.50",
+        "?? Введите новый курс USDT в RUB:\n"
+        "Пример: 95.50",
         reply_markup=get_back_button()
     )
 
 async def process_manual_rate(message: types.Message, state: FSMContext):
     """Process manual rate"""
-    if message.text == "рџ”™ РќР°Р·Р°Рґ":
-        await state.finish()
-        await message.answer("Р“Р»Р°РІРЅРѕРµ РјРµРЅСЋ:", reply_markup=get_main_menu('owner'))
+    if message.text == "?? Назад":
+        await state.clear()
+        await message.answer("Главное меню:", reply_markup=get_main_menu('owner'))
         return
     
     try:
@@ -368,26 +368,26 @@ async def process_manual_rate(message: types.Message, state: FSMContext):
         
         await ExchangeService.set_manual_rate(rate, user['user_id'] if user else None)
         
-        await state.finish()
+        await state.clear()
         await message.answer(
-            f"вњ… РљСѓСЂСЃ СѓСЃС‚Р°РЅРѕРІР»РµРЅ: {rate} RUB/USDT",
+            f"? Курс установлен: {rate} RUB/USDT",
             reply_markup=get_main_menu('owner')
         )
         
     except ValueError:
-        await message.answer("вќЊ Р’РІРµРґРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅРѕРµ С‡РёСЃР»Рѕ (Р±РѕР»СЊС€Рµ 0):")
+        await message.answer("? Введите корректное число (больше 0):")
 
 async def auto_update_rate(message: types.Message):
     """Auto update exchange rate"""
-    await message.answer("рџ”„ РћР±РЅРѕРІР»РµРЅРёРµ РєСѓСЂСЃР°...")
+    await message.answer("?? Обновление курса...")
     rate = await ExchangeService.update_rate_automatically()
     
     if rate:
-        await message.answer(f"вњ… РљСѓСЂСЃ РѕР±РЅРѕРІР»РµРЅ: {rate} RUB/USDT")
+        await message.answer(f"? Курс обновлен: {rate} RUB/USDT")
     else:
-        await message.answer("вќЊ РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ РєСѓСЂСЃ")
+        await message.answer("? Не удалось обновить курс")
 
-# ============== РЈРџР РђР’Р›Р•РќРР• РџРћР›Р¬Р—РћР’РђРўР•Р›РЇРњР ==============
+# ============== УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ ==============
 async def manage_users(message: types.Message):
     """Manage users and their balances"""
     async with db.pool.acquire() as conn:
@@ -401,31 +401,31 @@ async def manage_users(message: types.Message):
         ''')
         
         if not traders:
-            await message.answer("рџ“­ РўСЂРµР№РґРµСЂРѕРІ РЅРµС‚ РІ СЃРёСЃС‚РµРјРµ")
+            await message.answer("?? Трейдеров нет в системе")
             return
         
-        users_text = "рџ‘Ґ РЎРїРёСЃРѕРє С‚СЂРµР№РґРµСЂРѕРІ:\n\n"
+        users_text = "?? Список трейдеров:\n\n"
         
         for trader in traders:
-            status = "вњ…" if trader['insurance_deposit_confirmed'] else "вќЊ"
-            active_status = "рџџў" if trader['is_active'] else "рџ”ґ"
+            status = "?" if trader['insurance_deposit_confirmed'] else "?"
+            active_status = "??" if trader['is_active'] else "??"
             
             users_text += f"""
-{active_status} {status} @{trader['username'] or 'РќРµС‚ username'} (ID: {trader['user_id']})
-вЂў РЎС‚СЂР°С…РѕРІРѕР№: {trader['insurance_deposit']} USDT
-вЂў Р Р°Р±РѕС‡РёР№: {trader['working_deposit']} USDT
-вЂў Р”РµРїРѕР·РёС‚ РїРѕРґС‚РІРµСЂР¶РґРµРЅ: {'Р”Р°' if trader['insurance_deposit_confirmed'] else 'РќРµС‚'}
-вЂў РђРєС‚РёРІРµРЅ: {'Р”Р°' if trader['is_active'] else 'РќРµС‚'}
+{active_status} {status} @{trader['username'] or 'Нет username'} (ID: {trader['user_id']})
+• Страховой: {trader['insurance_deposit']} USDT
+• Рабочий: {trader['working_deposit']} USDT
+• Депозит подтвержден: {'Да' if trader['insurance_deposit_confirmed'] else 'Нет'}
+• Активен: {'Да' if trader['is_active'] else 'Нет'}
 """
         
         keyboard = types.InlineKeyboardMarkup(row_width=2)
         keyboard.add(
             types.InlineKeyboardButton(
-                "вњ… РџРѕРґС‚РІРµСЂРґРёС‚СЊ СЃС‚СЂР°С…РѕРІРѕР№ РґРµРїРѕР·РёС‚",
+                "? Подтвердить страховой депозит",
                 callback_data="confirm_deposit_menu"
             ),
             types.InlineKeyboardButton(
-                "рџ’° РџРѕРґС‚РІРµСЂРґРёС‚СЊ СЂР°Р±РѕС‡РёР№ РґРµРїРѕР·РёС‚",
+                "?? Подтвердить рабочий депозит",
                 callback_data="confirm_working_deposit_menu"
             )
         )
@@ -433,7 +433,7 @@ async def manage_users(message: types.Message):
         await message.answer(users_text, reply_markup=keyboard)
 
 async def confirm_deposit_menu_callback(callback_query: types.CallbackQuery):
-    """РњРµРЅСЋ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ РґРµРїРѕР·РёС‚Р°"""
+    """Меню подтверждения депозита"""
     async with db.pool.acquire() as conn:
         traders = await conn.fetch('''
             SELECT user_id, username, telegram_id, insurance_deposit
@@ -443,7 +443,7 @@ async def confirm_deposit_menu_callback(callback_query: types.CallbackQuery):
         ''')
         
         if not traders:
-            await callback_query.answer("вќЊ РќРµС‚ С‚СЂРµР№РґРµСЂРѕРІ РґР»СЏ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ")
+            await callback_query.answer("? Нет трейдеров для подтверждения")
             return
         
         keyboard = types.InlineKeyboardMarkup(row_width=2)
@@ -456,12 +456,12 @@ async def confirm_deposit_menu_callback(callback_query: types.CallbackQuery):
             )
         
         await callback_query.message.answer(
-            "рџ‘Ґ Р’С‹Р±РµСЂРёС‚Рµ С‚СЂРµР№РґРµСЂР° РґР»СЏ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ РґРµРїРѕР·РёС‚Р°:",
+            "?? Выберите трейдера для подтверждения депозита:",
             reply_markup=keyboard
         )
 
 async def confirm_working_deposit_menu_callback(callback_query: types.CallbackQuery):
-    """РњРµРЅСЋ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ СЂР°Р±РѕС‡РµРіРѕ РґРµРїРѕР·РёС‚Р°"""
+    """Меню подтверждения рабочего депозита"""
     async with db.pool.acquire() as conn:
         traders = await conn.fetch('''
             SELECT user_id, username, telegram_id, working_deposit
@@ -471,7 +471,7 @@ async def confirm_working_deposit_menu_callback(callback_query: types.CallbackQu
         ''')
 
         if not traders:
-            await callback_query.answer("вќЊ РќРµС‚ С‚СЂРµР№РґРµСЂРѕРІ РґР»СЏ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ")
+            await callback_query.answer("? Нет трейдеров для подтверждения")
             return
 
         keyboard = types.InlineKeyboardMarkup(row_width=2)
@@ -484,71 +484,71 @@ async def confirm_working_deposit_menu_callback(callback_query: types.CallbackQu
             )
 
         await callback_query.message.answer(
-            "рџ‘Ґ Р’С‹Р±РµСЂРёС‚Рµ С‚СЂРµР№РґРµСЂР° РґР»СЏ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ СЂР°Р±РѕС‡РµРіРѕ РґРµРїРѕР·РёС‚Р°:",
+            "?? Выберите трейдера для подтверждения рабочего депозита:",
             reply_markup=keyboard
         )
 
 async def confirm_working_deposit_callback(callback_query: types.CallbackQuery):
-    """РџРѕРґС‚РІРµСЂРґРёС‚СЊ СЂР°Р±РѕС‡РёР№ РґРµРїРѕР·РёС‚ С‚СЂРµР№РґРµСЂР°"""
+    """Подтвердить рабочий депозит трейдера"""
     try:
         data = callback_query.data
         if not data.startswith('confirm_working_deposit_'):
-            await callback_query.answer("вќЊ РќРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚ Р·Р°РїСЂРѕСЃР°")
+            await callback_query.answer("? Неверный формат запроса")
             return
 
         trader_id = int(data.split('_')[3])
 
         async with db.pool.acquire() as conn:
-            # РџРѕР»СѓС‡Р°РµРј РґР°РЅРЅС‹Рµ С‚СЂРµР№РґРµСЂР°
+            # Получаем данные трейдера
             trader = await conn.fetchrow(
                 "SELECT telegram_id, username, working_deposit FROM users WHERE user_id = $1",
                 trader_id
             )
 
             if not trader:
-                await callback_query.answer("вќЊ РўСЂРµР№РґРµСЂ РЅРµ РЅР°Р№РґРµРЅ")
+                await callback_query.answer("? Трейдер не найден")
                 return
 
-            # РћС‚РїСЂР°РІР»СЏРµРј СѓРІРµРґРѕРјР»РµРЅРёРµ С‚СЂРµР№РґРµСЂСѓ
+            # Отправляем уведомление трейдеру
             if trader and trader['telegram_id']:
                 try:
                     await callback_query.bot.send_message(
                         trader['telegram_id'],
-                        f"рџЋ‰ *Р’РђР–РќРћР• РЈР’Р•Р”РћРњР›Р•РќРР•!*\n\n"
-                        f"вњ… Р’Р°С€ СЂР°Р±РѕС‡РёР№ РґРµРїРѕР·РёС‚ РїРѕРґС‚РІРµСЂР¶РґРµРЅ РІР»Р°РґРµР»СЊС†РµРј!\n\n"
-                        f"рџ’° РЎСѓРјРјР°: {trader['working_deposit']} USDT\n\n"
-                        f"РўРµРїРµСЂСЊ РІС‹ РјРѕР¶РµС‚Рµ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ СЌС‚Рё СЃСЂРµРґСЃС‚РІР° РґР»СЏ СЂР°Р±РѕС‚С‹.\n"
-                        f"рџ“ћ РџРѕ РІРѕРїСЂРѕСЃР°Рј РѕР±СЂР°С‰Р°Р№С‚РµСЃСЊ Рє РІР»Р°РґРµР»СЊС†Сѓ.",
+                        f"?? *ВАЖНОЕ УВЕДОМЛЕНИЕ!*\n\n"
+                        f"? Ваш рабочий депозит подтвержден владельцем!\n\n"
+                        f"?? Сумма: {trader['working_deposit']} USDT\n\n"
+                        f"Теперь вы можете использовать эти средства для работы.\n"
+                        f"?? По вопросам обращайтесь к владельцу.",
                         parse_mode="Markdown"
                     )
                 except Exception as e:
-                    print(f"РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РїСЂР°РІРёС‚СЊ СѓРІРµРґРѕРјР»РµРЅРёРµ С‚СЂРµР№РґРµСЂСѓ: {e}")
+                    print(f"Не удалось отправить уведомление трейдеру: {e}")
 
-            await callback_query.answer(f"вњ… Р Р°Р±РѕС‡РёР№ РґРµРїРѕР·РёС‚ РїРѕРґС‚РІРµСЂР¶РґРµРЅ")
+            await callback_query.answer(f"? Рабочий депозит подтвержден")
 
-            # РћР±РЅРѕРІР»СЏРµРј РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏС…
+            # Обновляем информацию о пользователях
             await manage_users(callback_query.message)
 
     except (ValueError, IndexError) as e:
         print(f"Error in confirm_working_deposit_callback: {e}")
-        await callback_query.answer("вќЊ РћС€РёР±РєР°: РЅРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚ ID С‚СЂРµР№РґРµСЂР°")
+        await callback_query.answer("? Ошибка: неверный формат ID трейдера")
     except Exception as e:
         print(f"Error in confirm_working_deposit_callback: {e}")
-        await callback_query.answer("вќЊ РћС€РёР±РєР° РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ")
+        await callback_query.answer("? Ошибка подтверждения")
 
 async def confirm_deposit_callback(callback_query: types.CallbackQuery):
-    """РџРѕРґС‚РІРµСЂРґРёС‚СЊ РґРµРїРѕР·РёС‚ С‚СЂРµР№РґРµСЂР°"""
+    """Подтвердить депозит трейдера"""
     try:
-        # РџСЂР°РІРёР»СЊРЅРѕ РїР°СЂСЃРёРј callback_data: "confirm_deposit_123"
+        # Правильно парсим callback_data: "confirm_deposit_123"
         data = callback_query.data
         if not data.startswith('confirm_deposit_'):
-            await callback_query.answer("вќЊ РќРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚ Р·Р°РїСЂРѕСЃР°")
+            await callback_query.answer("? Неверный формат запроса")
             return
         
         trader_id = int(data.split('_')[2])
         
         async with db.pool.acquire() as conn:
-            # РџРѕРґС‚РІРµСЂР¶РґР°РµРј РґРµРїРѕР·РёС‚ Рё Р°РєС‚РёРІРёСЂСѓРµРј РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
+            # Подтверждаем депозит и активируем пользователя
             await conn.execute(
                 '''
                 UPDATE users 
@@ -561,30 +561,30 @@ async def confirm_deposit_callback(callback_query: types.CallbackQuery):
                 trader_id
             )
             
-            # РџРѕР»СѓС‡Р°РµРј РґР°РЅРЅС‹Рµ С‚СЂРµР№РґРµСЂР° РґР»СЏ СѓРІРµРґРѕРјР»РµРЅРёСЏ
+            # Получаем данные трейдера для уведомления
             trader = await conn.fetchrow(
                 "SELECT telegram_id, username FROM users WHERE user_id = $1",
                 trader_id
             )
             
             if trader and trader['telegram_id']:
-                # РћС‚РїСЂР°РІР»СЏРµРј СѓРІРµРґРѕРјР»РµРЅРёРµ С‚СЂРµР№РґРµСЂСѓ
+                # Отправляем уведомление трейдеру
                 try:
                     await callback_query.bot.send_message(
                         trader['telegram_id'],
-                        f"рџЋ‰ *Р’РђР–РќРћР• РЈР’Р•Р”РћРњР›Р•РќРР•!*\n\n"
-                        f"вњ… Р’Р°С€ СЃС‚СЂР°С…РѕРІРѕР№ РґРµРїРѕР·РёС‚ РїРѕРґС‚РІРµСЂР¶РґРµРЅ РІР»Р°РґРµР»СЊС†РµРј!\n\n"
-                        f"РўРµРїРµСЂСЊ РІС‹ РјРѕР¶РµС‚Рµ РЅР°С‡Р°С‚СЊ СЂР°Р±РѕС‚Сѓ РІ СЃРёСЃС‚РµРјРµ:\n"
-                        f"1. Р”РѕР±Р°РІСЊС‚Рµ СЂРµРєРІРёР·РёС‚С‹ С‡РµСЂРµР· РјРµРЅСЋ 'рџ’і РњРѕРё СЂРµРєРІРёР·РёС‚С‹'\n"
-                        f"2. РћР¶РёРґР°Р№С‚Рµ Р·Р°СЏРІРѕРє РѕС‚ РѕРїРµСЂР°С‚РѕСЂРѕРІ\n"
-                        f"3. РџРѕРґС‚РІРµСЂР¶РґР°Р№С‚Рµ РїРѕСЃС‚СѓРїР»РµРЅРёРµ СЃСЂРµРґСЃС‚РІ\n\n"
-                        f"рџ“ћ РџРѕ РІРѕРїСЂРѕСЃР°Рј РѕР±СЂР°С‰Р°Р№С‚РµСЃСЊ Рє РІР»Р°РґРµР»СЊС†Сѓ.",
+                        f"?? *ВАЖНОЕ УВЕДОМЛЕНИЕ!*\n\n"
+                        f"? Ваш страховой депозит подтвержден владельцем!\n\n"
+                        f"Теперь вы можете начать работу в системе:\n"
+                        f"1. Добавьте реквизиты через меню '?? Мои реквизиты'\n"
+                        f"2. Ожидайте заявок от операторов\n"
+                        f"3. Подтверждайте поступление средств\n\n"
+                        f"?? По вопросам обращайтесь к владельцу.",
                         parse_mode="Markdown"
                     )
                 except Exception as e:
-                    print(f"РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РїСЂР°РІРёС‚СЊ СѓРІРµРґРѕРјР»РµРЅРёРµ С‚СЂРµР№РґРµСЂСѓ: {e}")
+                    print(f"Не удалось отправить уведомление трейдеру: {e}")
             
-            # РћР±РЅРѕРІР»СЏРµРј РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏС… РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ
+            # Обновляем информацию о пользователях для отображения
             traders = await conn.fetch('''
                 SELECT user_id, username, telegram_id, 
                        insurance_deposit, working_deposit,
@@ -594,29 +594,29 @@ async def confirm_deposit_callback(callback_query: types.CallbackQuery):
                 ORDER BY created_at DESC
             ''')
             
-            users_text = "рџ‘Ґ РЎРїРёСЃРѕРє С‚СЂРµР№РґРµСЂРѕРІ:\n\n"
+            users_text = "?? Список трейдеров:\n\n"
             
             for trader_data in traders:
-                status = "вњ…" if trader_data['insurance_deposit_confirmed'] else "вќЊ"
-                active_status = "рџџў" if trader_data['is_active'] else "рџ”ґ"
+                status = "?" if trader_data['insurance_deposit_confirmed'] else "?"
+                active_status = "??" if trader_data['is_active'] else "??"
                 
                 users_text += f"""
-{active_status} {status} @{trader_data['username'] or 'РќРµС‚ username'} (ID: {trader_data['user_id']})
-вЂў РЎС‚СЂР°С…РѕРІРѕР№: {trader_data['insurance_deposit']} USDT
-вЂў Р Р°Р±РѕС‡РёР№: {trader_data['working_deposit']} USDT
-вЂў Р”РµРїРѕР·РёС‚ РїРѕРґС‚РІРµСЂР¶РґРµРЅ: {'Р”Р°' if trader_data['insurance_deposit_confirmed'] else 'РќРµС‚'}
-вЂў РђРєС‚РёРІРµРЅ: {'Р”Р°' if trader_data['is_active'] else 'РќРµС‚'}
+{active_status} {status} @{trader_data['username'] or 'Нет username'} (ID: {trader_data['user_id']})
+• Страховой: {trader_data['insurance_deposit']} USDT
+• Рабочий: {trader_data['working_deposit']} USDT
+• Депозит подтвержден: {'Да' if trader_data['insurance_deposit_confirmed'] else 'Нет'}
+• Активен: {'Да' if trader_data['is_active'] else 'Нет'}
 """
             
             keyboard = types.InlineKeyboardMarkup()
             keyboard.add(
                 types.InlineKeyboardButton(
-                    "вњ… РџРѕРґС‚РІРµСЂРґРёС‚СЊ РґРµРїРѕР·РёС‚", 
+                    "? Подтвердить депозит", 
                     callback_data="confirm_deposit_menu"
                 )
             )
             
-            await callback_query.answer(f"вњ… Р”РµРїРѕР·РёС‚ РїРѕРґС‚РІРµСЂР¶РґРµРЅ Рё Р°РєРєР°СѓРЅС‚ Р°РєС‚РёРІРёСЂРѕРІР°РЅ")
+            await callback_query.answer(f"? Депозит подтвержден и аккаунт активирован")
             await callback_query.message.edit_text(
                 f"{users_text}",
                 reply_markup=keyboard
@@ -624,25 +624,25 @@ async def confirm_deposit_callback(callback_query: types.CallbackQuery):
             
     except (ValueError, IndexError) as e:
         print(f"Error in confirm_deposit_callback: {e}")
-        await callback_query.answer("вќЊ РћС€РёР±РєР°: РЅРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚ ID С‚СЂРµР№РґРµСЂР°")
+        await callback_query.answer("? Ошибка: неверный формат ID трейдера")
     except Exception as e:
         print(f"Error in confirm_deposit_callback: {e}")
-        await callback_query.answer("вќЊ РћС€РёР±РєР° РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ")
+        await callback_query.answer("? Ошибка подтверждения")
 
 async def delete_specific_deal_start(message: types.Message, state: FSMContext):
-    """РќР°С‡Р°С‚СЊ СѓРґР°Р»РµРЅРёРµ РєРѕРЅРєСЂРµС‚РЅРѕР№ СЃРґРµР»РєРё"""
+    """Начать удаление конкретной сделки"""
     await state.set_state(OwnerStates.deleting_deal.state)
     await message.answer(
-        "рџ—‘пёЏ Р’РІРµРґРёС‚Рµ РЅРѕРјРµСЂ СЃРґРµР»РєРё РґР»СЏ СѓРґР°Р»РµРЅРёСЏ:\n"
-        "РџСЂРёРјРµСЂ: D202501011234",
+        "??? Введите номер сделки для удаления:\n"
+        "Пример: D202501011234",
         reply_markup=get_back_button()
     )
 
 async def delete_specific_deal(message: types.Message, state: FSMContext):
-    """РЈРґР°Р»РёС‚СЊ РєРѕРЅРєСЂРµС‚РЅСѓСЋ СЃРґРµР»РєСѓ"""
-    if message.text == "рџ”™ РќР°Р·Р°Рґ":
-        await state.finish()
-        await message.answer("Р“Р»Р°РІРЅРѕРµ РјРµРЅСЋ:", reply_markup=get_main_menu('owner'))
+    """Удалить конкретную сделку"""
+    if message.text == "?? Назад":
+        await state.clear()
+        await message.answer("Главное меню:", reply_markup=get_main_menu('owner'))
         return
     
     deal_number = message.text.strip()
@@ -654,7 +654,7 @@ async def delete_specific_deal(message: types.Message, state: FSMContext):
         )
         
         if not deal:
-            await message.answer("вќЊ РЎРґРµР»РєР° РЅРµ РЅР°Р№РґРµРЅР°")
+            await message.answer("? Сделка не найдена")
             return
         
         await conn.execute(
@@ -662,77 +662,77 @@ async def delete_specific_deal(message: types.Message, state: FSMContext):
             deal['deal_id']
         )
         
-        await message.answer(f"вњ… РЎРґРµР»РєР° #{deal_number} СѓРґР°Р»РµРЅР°")
+        await message.answer(f"? Сделка #{deal_number} удалена")
     
-    await state.finish()
+    await state.clear()
 
-# ============== РћР‘Р РђР‘РћРўР§РРљ РљРќРћРџРљР РќРђР—РђР” ==============
+# ============== ОБРАБОТЧИК КНОПКИ НАЗАД ==============
 async def handle_back_from_tokens(message: types.Message, state: FSMContext):
     """Handle back button from token management"""
-    await state.finish()
-    await message.answer("Р“Р»Р°РІРЅРѕРµ РјРµРЅСЋ:", reply_markup=get_main_menu('owner'))
+    await state.clear()
+    await message.answer("Главное меню:", reply_markup=get_main_menu('owner'))
 
-# ============== Р Р•Р“РРЎРўР РђР¦РРЇ РћР‘Р РђР‘РћРўР§РРљРћР’ ==============
-def register_owner_handlers(dp: Dispatcher):
-    # РЎС‚Р°С‚РёСЃС‚РёРєР°
-    dp.register_message_handler(show_owner_stats_menu, lambda m: m.text == "рџ“€ РћР±С‰Р°СЏ СЃС‚Р°С‚РёСЃС‚РёРєР°")
-    dp.register_message_handler(show_stats_by_period, lambda m: m.text == "рџ“Љ РћР±С‰Р°СЏ СЃС‚Р°С‚РёСЃС‚РёРєР°", state="*")
+# ============== РЕГИСТРАЦИЯ ОБРАБОТЧИКОВ ==============
+def register_owner_handlers(router: Router)::
+    # Статистика
+    router.message.register(show_owner_stats_menu, F.text == "?? Общая статистика")
+    router.message.register(show_stats_by_period, F.text == "?? Общая статистика", state="*")
     
-    # РЈРїСЂР°РІР»РµРЅРёРµ С‚РѕРєРµРЅР°РјРё
-    dp.register_message_handler(manage_tokens_start, lambda m: m.text == "рџ”‘ РЈРїСЂР°РІР»РµРЅРёРµ С‚РѕРєРµРЅР°РјРё")
-    dp.register_message_handler(create_token_start, lambda m: m.text == "рџ”ђ РЎРѕР·РґР°С‚СЊ С‚РѕРєРµРЅ", state="*")
-    dp.register_message_handler(process_token_role, state=OwnerStates.waiting_token_role)
-    dp.register_message_handler(list_tokens, lambda m: m.text == "рџ“‹ РЎРїРёСЃРѕРє С‚РѕРєРµРЅРѕРІ")
-    dp.register_message_handler(deactivate_token_start, lambda m: m.text == "вќЊ Р”РµР°РєС‚РёРІРёСЂРѕРІР°С‚СЊ С‚РѕРєРµРЅ", state="*")
-    dp.register_message_handler(process_deactivate_token, state=OwnerStates.deactivating_token)
+    # Управление токенами
+    router.message.register(manage_tokens_start, F.text == "?? Управление токенами")
+    router.message.register(create_token_start, F.text == "?? Создать токен", state="*")
+    router.message.register(process_token_role, state=OwnerStates.waiting_token_role)
+    router.message.register(list_tokens, F.text == "?? Список токенов")
+    router.message.register(deactivate_token_start, F.text == "? Деактивировать токен", state="*")
+    router.message.register(process_deactivate_token, state=OwnerStates.deactivating_token)
     
-    # РЈРїСЂР°РІР»РµРЅРёРµ РєСѓСЂСЃРѕРј
-    dp.register_message_handler(manage_exchange_rate, lambda m: m.text == "рџ’± РљСѓСЂСЃ USDT")
-    dp.register_message_handler(set_rate_manual_start, lambda m: m.text == "вњЏпёЏ РЈСЃС‚Р°РЅРѕРІРёС‚СЊ РєСѓСЂСЃ", state="*")
-    dp.register_message_handler(process_manual_rate, state=OwnerStates.setting_exchange_rate)
-    dp.register_message_handler(auto_update_rate, lambda m: m.text == "рџ”„ РђРІС‚РѕРѕР±РЅРѕРІР»РµРЅРёРµ РєСѓСЂСЃР°")
+    # Управление курсом
+    router.message.register(manage_exchange_rate, F.text == "?? Курс USDT")
+    router.message.register(set_rate_manual_start, F.text == "?? Установить курс", state="*")
+    router.message.register(process_manual_rate, state=OwnerStates.setting_exchange_rate)
+    router.message.register(auto_update_rate, F.text == "?? Автообновление курса")
     
-    # РЈРїСЂР°РІР»РµРЅРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏРјРё
-    dp.register_message_handler(manage_users, lambda m: m.text == "рџ‘Ґ РЈРїСЂР°РІР»РµРЅРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏРјРё")
+    # Управление пользователями
+    router.message.register(manage_users, F.text == "?? Управление пользователями")
     
-    # РЈРґР°Р»РµРЅРёРµ СЃРґРµР»РѕРє
-    dp.register_message_handler(delete_specific_deal_start, lambda m: m.text == "рџ—‘пёЏ РЈРґР°Р»РёС‚СЊ СЃРґРµР»РєСѓ", state="*")
-    dp.register_message_handler(delete_specific_deal, state=OwnerStates.deleting_deal)
+    # Удаление сделок
+    router.message.register(delete_specific_deal_start, F.text == "??? Удалить сделку", state="*")
+    router.message.register(delete_specific_deal, state=OwnerStates.deleting_deal)
     
-    # РљРЅРѕРїРєР° "РќР°Р·Р°Рґ"
-    dp.register_message_handler(handle_back_from_tokens, lambda m: m.text == "рџ”™ РќР°Р·Р°Рґ", state="*")
+    # Кнопка "Назад"
+    router.message.register(handle_back_from_tokens, F.text == "?? Назад", state="*")
     
-    # Callback С…СЌРЅРґР»РµСЂС‹
-    dp.register_callback_query_handler(
+    # Callback хэндлеры
+    router.callback_query.register(
         update_rate_auto_callback, 
         lambda c: c.data == "update_rate_auto"
     )
-    dp.register_callback_query_handler(
+    router.callback_query.register(
         set_rate_manual_callback, 
         lambda c: c.data == "set_rate_manual",
         state="*"
     )
-    dp.register_callback_query_handler(
+    router.callback_query.register(
         delete_deals_callback,
-        lambda c: c.data.startswith('delete_deals_')
+        F.data.startswith('delete_deals_')
     )
-    dp.register_callback_query_handler(
+    router.callback_query.register(
         back_to_stats_menu_callback,
         lambda c: c.data == "back_to_stats_menu"
     )
-    dp.register_callback_query_handler(
+    router.callback_query.register(
         confirm_deposit_menu_callback,
         lambda c: c.data == "confirm_deposit_menu"
     )
-    dp.register_callback_query_handler(
+    router.callback_query.register(
         confirm_deposit_callback,
-        lambda c: c.data.startswith('confirm_deposit_')
+        F.data.startswith('confirm_deposit_')
     )
-    dp.register_callback_query_handler(
+    router.callback_query.register(
         confirm_working_deposit_menu_callback,
         lambda c: c.data == "confirm_working_deposit_menu"
     )
-    dp.register_callback_query_handler(
+    router.callback_query.register(
         confirm_working_deposit_callback,
-        lambda c: c.data.startswith('confirm_working_deposit_')
+        F.data.startswith('confirm_working_deposit_')
     )

@@ -1,6 +1,6 @@
-﻿from aiogram import Dispatcher, types
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import State, StatesGroup
+﻿from aiogram import Router, F, types
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 from services.auth_service import AuthService
 from services.deal_service import DealService
 from database.models import db
@@ -812,42 +812,42 @@ async def handle_dispute_trader(callback_query: types.CallbackQuery):
         await callback_query.answer("❌ Ошибка")
 
 # ============== РЕГИСТРАЦИЯ ОБРАБОТЧИКОВ ==============
-def register_trader_handlers(dp: Dispatcher):
+def register_trader_handlers(router: Router):
     # Основные команды
-    dp.register_message_handler(show_trader_dashboard, lambda m: m.text == "👤 Личный кабинет")
-    dp.register_message_handler(trader_payment_details, lambda m: m.text == "💳 Мои реквизиты")
-    dp.register_message_handler(add_detail_start, lambda m: m.text == "➕ Добавить реквизит", state="*")
-    dp.register_message_handler(show_my_details, lambda m: m.text == "📋 Список реквизитов")
-    dp.register_message_handler(show_active_deals, lambda m: m.text == "⚡ Активные заявки")
-    dp.register_message_handler(show_my_deals, lambda m: m.text == "📊 Мои сделки")
-    dp.register_message_handler(show_disputes_trader, lambda m: m.text == "⚖️ Споры")
-    dp.register_message_handler(top_up_deposit_start, lambda m: m.text == "💰 Пополнить депозит", state="*")
+    router.message.register(show_trader_dashboard, F.text == "👤 Личный кабинет")
+    router.message.register(trader_payment_details, F.text == "💳 Мои реквизиты")
+    router.message.register(add_detail_start, F.text == "➕ Добавить реквизит")
+    router.message.register(show_my_details, F.text == "📋 Список реквизитов")
+    router.message.register(show_active_deals, F.text == "⚡ Активные заявки")
+    router.message.register(show_my_deals, F.text == "📊 Мои сделки")
+    router.message.register(show_disputes_trader, F.text == "⚖️ Споры")
+    router.message.register(top_up_deposit_start, F.text == "💰 Пополнить депозит")
     
     # State handlers для добавления реквизитов
-    dp.register_message_handler(process_detail_name, state=TraderStates.waiting_detail_name)
-    dp.register_message_handler(process_detail_type, state=TraderStates.waiting_detail_type)
-    dp.register_message_handler(process_bank_name, state=TraderStates.waiting_bank_name)
-    dp.register_message_handler(process_full_name, state=TraderStates.waiting_full_name)
-    dp.register_message_handler(process_card_number, state=TraderStates.waiting_card_number)
-    dp.register_message_handler(process_phone, state=TraderStates.waiting_phone)
-    dp.register_message_handler(process_min_amount, state=TraderStates.waiting_min_amount)
-    dp.register_message_handler(process_max_amount, state=TraderStates.waiting_max_amount)
-    dp.register_message_handler(process_deposit_amount, state=TraderStates.waiting_deposit_amount)
+    router.message.register(process_detail_name, TraderStates.waiting_detail_name)
+    router.message.register(process_detail_type, TraderStates.waiting_detail_type)
+    router.message.register(process_bank_name, TraderStates.waiting_bank_name)
+    router.message.register(process_full_name, TraderStates.waiting_full_name)
+    router.message.register(process_card_number, TraderStates.waiting_card_number)
+    router.message.register(process_phone, TraderStates.waiting_phone)
+    router.message.register(process_min_amount, TraderStates.waiting_min_amount)
+    router.message.register(process_max_amount, TraderStates.waiting_max_amount)
+    router.message.register(process_deposit_amount, TraderStates.waiting_deposit_amount)
     
     # Callback handlers
-    dp.register_callback_query_handler(
+    router.callback_query.register(
         handle_deal_confirmation, 
-        lambda c: c.data.startswith(('confirm_', 'reject_')) and not 'deposit' in c.data and not 'dispute' in c.data
+        F.data.startswith(('confirm_', 'reject_')) & ~F.data.contains('deposit') & ~F.data.contains('dispute')
     )
-    dp.register_callback_query_handler(
+    router.callback_query.register(
         handle_detail_toggle,
-        lambda c: c.data.startswith('toggle_detail_')
+        F.data.startswith('toggle_detail_')
     )
-    dp.register_callback_query_handler(
+    router.callback_query.register(
         handle_detail_delete,
-        lambda c: c.data.startswith('delete_detail_')
+        F.data.startswith('delete_detail_')
     )
-    dp.register_callback_query_handler(
+    router.callback_query.register(
         handle_dispute_trader,
-        lambda c: c.data.startswith('dispute_')
+        F.data.startswith('dispute_')
     )

@@ -1,25 +1,26 @@
 ﻿from aiogram import types
-from aiogram.dispatcher.middlewares import BaseMiddleware
-from aiogram.dispatcher.handler import CancelHandler
+from aiogram.types import Message
+from aiogram import BaseMiddleware
+from aiogram.exceptions import TelegramAPIError
 from services.auth_service import AuthService
 
 class AccessMiddleware(BaseMiddleware):
     """Middleware для проверки доступа трейдера к функционалу"""
     
-    async def on_pre_process_message(self, message: types.Message, data: dict):
+    async def __call__(self, handler, event: Message, data: dict):
         # Пропускаем системные команды
-        if message.text in ['/start', '/logout'] or message.text.startswith('/'):
-            return
+        if event.text in ['/start', '/logout'] or event.text.startswith('/'):
+            return await handler(event, data)
         
         # Разрешаем кнопку "Назад" всегда
-        if message.text == "🔙 Назад":
-            return
+        if event.text == "🔙 Назад":
+            return await handler(event, data)
         
         # Получаем данные пользователя
-        user_data = await AuthService.get_user_data(message.from_user.id)
+        user_data = await AuthService.get_user_data(event.from_user.id)
         
         if not user_data:
-            return
+            return await handler(event, data)
         
         # Проверяем доступ только для трейдеров
         if user_data['role'] == 'trader':
@@ -29,22 +30,24 @@ class AccessMiddleware(BaseMiddleware):
                 "🚪 Выйти"
             ]
             
-            if message.text in allowed_for_all:
-                return
+            if event.text in allowed_for_all:
+                return await handler(event, data)
             
             # Проверяем доступ к остальному функционалу
             if not user_data['insurance_deposit_confirmed']:
-                await message.answer(
+                await event.answer(
                     "❌ *ДОСТУП ЗАПРЕЩЕН!*\n\n"
                     "Для доступа к функционалу необходимо подтверждение страхового депозита.\n"
                     "Обратитесь к владельцу после пополнения депозита.",
                     parse_mode="Markdown"
                 )
-                raise CancelHandler()
+                return
             
             if not user_data.get('is_active', True):
-                await message.answer(
+                await event.answer(
                     "❌ Ваш аккаунт деактивирован.\n"
                     "Обратитесь к владельцу для активации."
                 )
-                raise CancelHandler()
+                return
+        
+        return await handler(event, data)

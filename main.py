@@ -2,7 +2,7 @@
 import logging
 import os
 import sys
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, Router
 from aiogram.exceptions import NetworkError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiohttp import web
@@ -122,9 +122,12 @@ async def main():
     
     dp = Dispatcher()
     
+    # Create router for handlers
+    router = Router()
+    
     # Add middleware
-    dp.message.middleware(AccessMiddleware())
-    dp.callback_query.middleware(AccessMiddleware())
+    router.message.middleware(AccessMiddleware())
+    router.callback_query.middleware(AccessMiddleware())
     
     # Initialize scheduler
     scheduler = AsyncIOScheduler()
@@ -141,10 +144,13 @@ async def main():
         return
     
     # Register handlers
-    register_common_handlers(dp)
-    register_trader_handlers(dp)
-    register_operator_handlers(dp)
-    register_owner_handlers(dp)
+    register_common_handlers(router)
+    register_trader_handlers(router)
+    register_operator_handlers(router)
+    register_owner_handlers(router)
+    
+    # Include router in dispatcher
+    dp.include_router(router)
     
     # Start HTTP server for health checks (Render wake-on-webhook)
     await start_http_server()
