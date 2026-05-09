@@ -41,6 +41,7 @@ async def token_command(message: types.Message, state: FSMContext):
     
     token = args[1].strip()
     print(f"🔥 КОМАНДА /token ВЫЗВАНА: {token}")
+    print(f"🔥 Пользователь: {message.from_user.id}, @{message.from_user.username}")
     
     # Проверяем длину токена
     if len(token) != 16 or not token.isalnum():
@@ -48,6 +49,10 @@ async def token_command(message: types.Message, state: FSMContext):
         return
     
     print(f"🔍 Проверяем токен: {token} от пользователя {message.from_user.id}")
+    
+    # Проверяем подключение к БД
+    from database.models import db
+    print(f"🔍 Статус пула БД: {db.pool is not None}")
     
     user = await AuthService.authenticate_user(
         token, 
