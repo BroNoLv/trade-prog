@@ -3,7 +3,7 @@ services:
     name: p2p-exchange-bot
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt && python scripts/init_tokens.py
+    buildCommand: pip install -r requirements.txt
     startCommand: python app.py
     envVars:
       - key: BOT_TOKEN

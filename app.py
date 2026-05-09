@@ -16,6 +16,9 @@ from handlers.owner import register_owner_handlers
 from services.deal_service import DealService
 from services.exchange_service import ExchangeService
 from middlewares.access_middleware import AccessMiddleware
+import random
+import string
+import os
 
 # Configure logging
 logging.basicConfig(
@@ -58,6 +61,38 @@ def cleanup_pid_file():
             os.remove(PID_FILE)
         except:
             pass
+
+async def initialize_tokens():
+    """Инициализация токенов при запуске бота"""
+    try:
+        async with db.pool.acquire() as conn:
+            # Проверяем, есть ли активные токены
+            existing_tokens = await conn.fetch("SELECT COUNT(*) as count FROM tokens WHERE is_active = TRUE")
+            
+            if existing_tokens[0]['count'] == 0:
+                logger.info("🔑 Создаем начальные токены...")
+                
+                # Создаем новые токены
+                tokens_data = []
+                for role in ['owner', 'operator', 'trader']:
+                    token = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+                    await conn.execute(
+                        "INSERT INTO tokens (token, role, is_active) VALUES ($1, $2, TRUE)",
+                        token, role
+                    )
+                    tokens_data.append((role.upper(), token))
+                
+                logger.info("✅ Токены созданы:")
+                for role, token in tokens_data:
+                    logger.info(f"🔑 TOKEN FOR {role}: {token}")
+            else:
+                logger.info(f"📋 Найдено {existing_tokens[0]['count']} активных токенов")
+                tokens = await conn.fetch("SELECT role, token FROM tokens WHERE is_active = TRUE")
+                for token in tokens:
+                    logger.info(f"🔑 EXISTING TOKEN FOR {token['role'].upper()}: {token['token']}")
+                    
+    except Exception as e:
+        logger.error(f"❌ Ошибка при инициализации токенов: {e}")
 
 # HTTP Server for health checks (wake-on-webhook)
 app = web.Application()
@@ -139,6 +174,10 @@ async def main():
     try:
         await db.connect()
         logger.info("✅ База данных подключена успешно")
+        
+        # Initialize tokens if needed
+        await initialize_tokens()
+        
     except Exception as e:
         logger.error(f"❌ Ошибка подключения к базе данных: {e}")
         return
