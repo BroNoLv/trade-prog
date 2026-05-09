@@ -673,7 +673,7 @@ async def handle_back_from_tokens(message: types.Message, state: FSMContext):
     await message.answer("������� ����:", reply_markup=get_main_menu('owner'))
 
 # ============== ����������� ������������ ==============
-def register_owner_handlers(router: Router)::
+def register_owner_handlers(router: Router):
     # ����������
     router.message.register(show_owner_stats_menu, F.text == "?? ����� ����������")
     router.message.register(show_stats_by_period, F.text == "?? ����� ����������", state="*")
