@@ -27,6 +27,7 @@ async def start_command(message: types.Message, state: FSMContext):
         "🔐 Введите ваш токен для доступа к системе:",
         reply_markup=types.ReplyKeyboardRemove()
     )
+    await state.set_state(AuthStates.waiting_for_token)
 
 async def process_token(message: types.Message, state: FSMContext):
     """Process entered token"""
