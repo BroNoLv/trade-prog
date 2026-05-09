@@ -66,30 +66,23 @@ async def initialize_tokens():
     """Инициализация токенов при запуске бота"""
     try:
         async with db.pool.acquire() as conn:
-            # Проверяем, есть ли активные токены
-            existing_tokens = await conn.fetch("SELECT COUNT(*) as count FROM tokens WHERE is_active = TRUE")
+            # Удаляем все старые токены и создаем новые
+            logger.info("� Пересоздаем токены...")
+            await conn.execute("DELETE FROM tokens")
             
-            if existing_tokens[0]['count'] == 0:
-                logger.info("🔑 Создаем начальные токены...")
-                
-                # Создаем новые токены
-                tokens_data = []
-                for role in ['owner', 'operator', 'trader']:
-                    token = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
-                    await conn.execute(
-                        "INSERT INTO tokens (token, role, is_active) VALUES ($1, $2, TRUE)",
-                        token, role
-                    )
-                    tokens_data.append((role.upper(), token))
-                
-                logger.info("✅ Токены созданы:")
-                for role, token in tokens_data:
-                    logger.info(f"🔑 TOKEN FOR {role}: {token}")
-            else:
-                logger.info(f"📋 Найдено {existing_tokens[0]['count']} активных токенов")
-                tokens = await conn.fetch("SELECT role, token FROM tokens WHERE is_active = TRUE")
-                for token in tokens:
-                    logger.info(f"🔑 EXISTING TOKEN FOR {token['role'].upper()}: {token['token']}")
+            # Создаем новые токены
+            tokens_data = []
+            for role in ['owner', 'operator', 'trader']:
+                token = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+                await conn.execute(
+                    "INSERT INTO tokens (token, role, is_active) VALUES ($1, $2, TRUE)",
+                    token, role
+                )
+                tokens_data.append((role.upper(), token))
+            
+            logger.info("✅ Новые токены созданы:")
+            for role, token in tokens_data:
+                logger.info(f"🔑 TOKEN FOR {role}: {token}")
                     
     except Exception as e:
         logger.error(f"❌ Ошибка при инициализации токенов: {e}")
