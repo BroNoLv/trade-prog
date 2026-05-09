@@ -8,8 +8,11 @@ class AccessMiddleware(BaseMiddleware):
     """Middleware для проверки доступа трейдера к функционалу"""
     
     async def __call__(self, handler, event: Message, data: dict):
+        print(f"🔧 MIDDLEWARE ВЫЗВАН: {event.text}")
+        
         # Пропускаем ввод токена (16 символов - длина токена)
         if event.text and len(event.text.strip()) == 16 and event.text.strip().isalnum():
+            print(f"✅ MIDDLEWARE: Пропускаем токен")
             return await handler(event, data)
         
         # Пропускаем системные команды

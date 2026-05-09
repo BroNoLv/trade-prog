@@ -33,11 +33,14 @@ async def start_command(message: types.Message, state: FSMContext):
 
 async def process_token(message: types.Message, state: FSMContext):
     """Process entered token - simple handler without FSM"""
+    print(f"🔥 ОБРАБОТЧИК ВЫЗВАН: {message.text}")
+    
     token = message.text.strip()
     
     # Проверяем, что это выглядит как токен (16 символов)
     if len(token) != 16 or not token.isalnum():
         # Не токен, пропускаем
+        print(f"❌ НЕ ТОКЕН: длина={len(token)}, isalnum={token.isalnum()}")
         return
     
     print(f"🔍 Проверяем токен: {token} от пользователя {message.from_user.id}")

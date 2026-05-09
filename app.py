@@ -164,9 +164,9 @@ async def main():
     # Create router for handlers
     router = Router()
     
-    # Add middleware
-    router.message.middleware(AccessMiddleware())
-    router.callback_query.middleware(AccessMiddleware())
+    # Временно убираем middleware для тестирования токенов
+    # router.message.middleware(AccessMiddleware())
+    # router.callback_query.middleware(AccessMiddleware())
     
     # Initialize scheduler
     scheduler = AsyncIOScheduler()
