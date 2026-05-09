@@ -203,7 +203,9 @@ async def main():
     # Start bot
     try:
         logger.info("🤖 Бот запущен успешно!")
+        # Удаляем webhook и сбрасываем обновления перед polling
         await bot.delete_webhook(drop_pending_updates=True)
+        logger.info("✅ Webhook удален, начинаем polling")
         await dp.start_polling(bot)
     except NetworkError as e:
         logger.error(f"❌ Ошибка сети: {e}")
