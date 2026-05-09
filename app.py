@@ -22,10 +22,13 @@ import os
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Добавляем принудительный вывод в консоль
+print("🚀 Бот запускается...")
 
 # Use /tmp for PID file in cloud environments
 PID_FILE = "/tmp/bot.pid" if os.path.exists("/tmp") else "bot.pid"
@@ -65,9 +68,11 @@ def cleanup_pid_file():
 async def initialize_tokens():
     """Инициализация токенов при запуске бота"""
     try:
+        print("🔄 Начинаю инициализацию токенов...")
         async with db.pool.acquire() as conn:
             # Удаляем все старые токены и создаем новые
-            logger.info("� Пересоздаем токены...")
+            logger.info("🔄 Пересоздаем токены...")
+            print("🔄 Удаляем старые токены...")
             await conn.execute("DELETE FROM tokens")
             
             # Создаем новые токены
