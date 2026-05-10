@@ -1,4 +1,4 @@
-﻿from aiogram import Router, F, types
+from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 import random
@@ -42,7 +42,7 @@ async def process_stats_start_date(message: types.Message, state: FSMContext):
     try:
         start_date = datetime.strptime(message.text, "%d.%m.%Y")
         await state.update_data(start_date=start_date)
-        await OwnerStates.waiting_stats_end_date.set()
+        await state.set_state(OwnerStates.waiting_stats_end_date)
         await message.answer(
             "📅 Введите конечную дату в формате ДД.ММ.ГГГГ:\n"
             "Пример: 31.12.2024",
@@ -136,13 +136,9 @@ async def show_stats_with_filter(message: types.Message, date_filter: str, perio
 🚫 Отклонено: {deal_stats['rejected'] or 0}
 """
 
-        keyboard = types.InlineKeyboardMarkup()
-        keyboard.add(
-            types.InlineKeyboardButton(
-                "🔙 Назад",
-                callback_data="back_to_stats_menu"
-            )
-        )
+        keyboard = types.InlineKeyboardMarkup(inline_keyboard=[[
+            types.InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_stats_menu")
+        ]])
 
         await message.answer(stats_text, reply_markup=keyboard)
 
@@ -299,11 +295,12 @@ async def manage_exchange_rate(message: types.Message):
     """Manage exchange rate"""
     rate = await ExchangeService.get_current_rate()
     
-    keyboard = types.InlineKeyboardMarkup()
-    keyboard.row(
-        types.InlineKeyboardButton("📈 Обновить автоматически", callback_data="update_rate_auto"),
-        types.InlineKeyboardButton("✏️ Установить вручную", callback_data="set_rate_manual")
-    )
+    keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+        [
+            types.InlineKeyboardButton(text="📈 Обновить автоматически", callback_data="update_rate_auto"),
+            types.InlineKeyboardButton(text="✏️ Установить вручную", callback_data="set_rate_manual")
+        ]
+    ])
     
     await message.answer(
         f"💱 Текущий курс USDT: {rate} RUB\n\n"
@@ -331,7 +328,7 @@ async def update_rate_auto_callback(callback_query: types.CallbackQuery):
 async def set_rate_manual_callback(callback_query: types.CallbackQuery, state: FSMContext):
     """Handle manual rate set callback"""
     await callback_query.answer()
-    await OwnerStates.setting_exchange_rate.set()
+    await state.set_state(OwnerStates.setting_exchange_rate)
     
     await callback_query.message.answer(
         "💰 Введите новый курс USDT в RUB:\n"
@@ -418,17 +415,12 @@ async def manage_users(message: types.Message):
 • Активен: {'Да' if trader['is_active'] else 'Нет'}
 """
         
-        keyboard = types.InlineKeyboardMarkup(row_width=2)
-        keyboard.add(
-            types.InlineKeyboardButton(
-                "✅ Подтвердить страховой депозит",
-                callback_data="confirm_deposit_menu"
-            ),
-            types.InlineKeyboardButton(
-                "💰 Подтвердить рабочий депозит",
-                callback_data="confirm_working_deposit_menu"
-            )
-        )
+        keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+            [
+                types.InlineKeyboardButton(text="✅ Подтвердить страховой депозит", callback_data="confirm_deposit_menu"),
+                types.InlineKeyboardButton(text="💰 Подтвердить рабочий депозит", callback_data="confirm_working_deposit_menu")
+            ]
+        ])
         
         await message.answer(users_text, reply_markup=keyboard)
 
@@ -446,14 +438,15 @@ async def confirm_deposit_menu_callback(callback_query: types.CallbackQuery):
             await callback_query.answer("❌ Нет трейдеров для подтверждения")
             return
         
-        keyboard = types.InlineKeyboardMarkup(row_width=2)
+        keyboard_buttons = []
         for trader in traders:
-            keyboard.add(
+            keyboard_buttons.append([
                 types.InlineKeyboardButton(
-                    f"@{trader['username'] or trader['user_id']}",
+                    text=f"@{trader['username'] or trader['user_id']}",
                     callback_data=f"confirm_deposit_{trader['user_id']}"
                 )
-            )
+            ])
+        keyboard = types.InlineKeyboardMarkup(inline_keyboard=keyboard_buttons)
         
         await callback_query.message.answer(
             "👥 Выберите трейдера для подтверждения депозита:",
@@ -474,14 +467,15 @@ async def confirm_working_deposit_menu_callback(callback_query: types.CallbackQu
             await callback_query.answer("❌ Нет трейдеров для подтверждения")
             return
 
-        keyboard = types.InlineKeyboardMarkup(row_width=2)
+        keyboard_buttons = []
         for trader in traders:
-            keyboard.add(
+            keyboard_buttons.append([
                 types.InlineKeyboardButton(
-                    f"@{trader['username'] or trader['user_id']} ({trader['working_deposit']} USDT)",
+                    text=f"@{trader['username'] or trader['user_id']} ({trader['working_deposit']} USDT)",
                     callback_data=f"confirm_working_deposit_{trader['user_id']}"
                 )
-            )
+            ])
+        keyboard = types.InlineKeyboardMarkup(inline_keyboard=keyboard_buttons)
 
         await callback_query.message.answer(
             "👥 Выберите трейдера для подтверждения рабочего депозита:",
@@ -608,13 +602,9 @@ async def confirm_deposit_callback(callback_query: types.CallbackQuery):
 • Активен: {'Да' if trader_data['is_active'] else 'Нет'}
 """
             
-            keyboard = types.InlineKeyboardMarkup()
-            keyboard.add(
-                types.InlineKeyboardButton(
-                    "✅ Подтвердить депозит", 
-                    callback_data="confirm_deposit_menu"
-                )
-            )
+            keyboard = types.InlineKeyboardMarkup(inline_keyboard=[[
+                types.InlineKeyboardButton(text="✅ Подтвердить депозит", callback_data="confirm_deposit_menu")
+            ]])
             
             await callback_query.answer(f"✅ Депозит подтвержден и аккаунт активирован")
             await callback_query.message.edit_text(

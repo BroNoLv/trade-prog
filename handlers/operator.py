@@ -1,4 +1,4 @@
-﻿from aiogram import Router, F, types
+from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from services.deal_service import DealService
@@ -17,7 +17,7 @@ async def create_deal_start(message: types.Message, state: FSMContext):
     await message.answer(
         "💰 Введите сумму сделки в RUB:\n"
         "Пример: 15000",
-        reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True).add("🔙 Назад")
+        reply_markup=types.ReplyKeyboardMarkup(keyboard=[[types.KeyboardButton(text="🔙 Назад")]], resize_keyboard=True)
     )
 
 async def process_deal_amount(message: types.Message, state: FSMContext):
@@ -132,7 +132,7 @@ async def search_transactions_start(message: types.Message, state: FSMContext):
     await state.set_state(OperatorStates.searching_transaction.state)
     await message.answer(
         "🔍 Введите номер заявки или сумму для поиска:",
-        reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True).add("🔙 Назад")
+        reply_markup=types.ReplyKeyboardMarkup(keyboard=[[types.KeyboardButton(text="🔙 Назад")]], resize_keyboard=True)
     )
 
 async def show_active_deals_operator(message: types.Message):
@@ -179,12 +179,13 @@ async def show_active_deals_operator(message: types.Message):
 ⏳ Статус: {deal['status']}
 """
 
-            keyboard = types.InlineKeyboardMarkup()
+            keyboard_buttons = []
             if deal['status'] == 'pending':
-                keyboard.add(types.InlineKeyboardButton(
-                    "⚖️ Открыть спор",
+                keyboard_buttons.append([types.InlineKeyboardButton(
+                    text="⚖️ Открыть спор",
                     callback_data=f"open_dispute_{deal['deal_id']}"
-                ))
+                )])
+            keyboard = types.InlineKeyboardMarkup(inline_keyboard=keyboard_buttons)
 
             await message.answer(deal_text, reply_markup=keyboard)
 

@@ -124,8 +124,7 @@ async def add_detail_start(message: types.Message, state: FSMContext):
     
     await state.set_state(TraderStates.waiting_detail_name.state)
     
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add(types.KeyboardButton("🔙 Назад"))
+    keyboard = types.ReplyKeyboardMarkup(keyboard=[[types.KeyboardButton(text="🔙 Назад")]], resize_keyboard=True)
     
     await message.answer(
         "🏷️ *Придумайте название для этого реквизита:*\n\n"
@@ -147,10 +146,14 @@ async def process_detail_name(message: types.Message, state: FSMContext):
     
     await state.update_data(detail_name=message.text)
     
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    keyboard.add(types.KeyboardButton("💳 Банковская карта"))
-    keyboard.add(types.KeyboardButton("📱 СБП"))
-    keyboard.add(types.KeyboardButton("🔙 Назад"))
+    keyboard = types.ReplyKeyboardMarkup(
+        keyboard=[
+            [types.KeyboardButton(text="💳 Банковская карта")],
+            [types.KeyboardButton(text="📱 СБП")],
+            [types.KeyboardButton(text="🔙 Назад")]
+        ],
+        resize_keyboard=True
+    )
     
     await state.set_state(TraderStates.waiting_detail_type.state)
     await message.answer("📋 *Выберите тип реквизита:*", parse_mode="Markdown", reply_markup=keyboard)
@@ -177,10 +180,14 @@ async def process_bank_name(message: types.Message, state: FSMContext):
     """Обработать название банка"""
     if message.text == "🔙 Назад":
         await state.set_state(TraderStates.waiting_detail_type.state)
-        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-        keyboard.add(types.KeyboardButton("💳 Банковская карта"))
-        keyboard.add(types.KeyboardButton("📱 СБП"))
-        keyboard.add(types.KeyboardButton("🔙 Назад"))
+        keyboard = types.ReplyKeyboardMarkup(
+            keyboard=[
+                [types.KeyboardButton(text="💳 Банковская карта")],
+                [types.KeyboardButton(text="📱 СБП")],
+                [types.KeyboardButton(text="🔙 Назад")]
+            ],
+            resize_keyboard=True
+        )
         await message.answer("📋 Выберите тип реквизита:", reply_markup=keyboard)
         return
     
@@ -364,17 +371,18 @@ async def show_my_details(message: types.Message):
             detail_text += f"📅 Добавлен: {detail['created_at'].strftime('%d.%m.%Y')}\n"
             detail_text += f"⚡ Статус: {'Активен ✅' if detail['is_active'] else 'Не активен ❌'}"
             
-            keyboard = types.InlineKeyboardMarkup(row_width=2)
-            keyboard.row(
-                types.InlineKeyboardButton(
-                    "🔴 Выключить" if detail['is_active'] else "🟢 Включить",
-                    callback_data=f"toggle_detail_{detail['detail_id']}"
-                ),
-                types.InlineKeyboardButton(
-                    "❌ Удалить",
-                    callback_data=f"delete_detail_{detail['detail_id']}"
-                )
-            )
+            keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    types.InlineKeyboardButton(
+                        text="🔴 Выключить" if detail['is_active'] else "🟢 Включить",
+                        callback_data=f"toggle_detail_{detail['detail_id']}"
+                    ),
+                    types.InlineKeyboardButton(
+                        text="❌ Удалить",
+                        callback_data=f"delete_detail_{detail['detail_id']}"
+                    )
+                ]
+            ])
             
             await message.answer(detail_text, reply_markup=keyboard)
 

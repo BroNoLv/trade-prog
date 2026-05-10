@@ -1,4 +1,4 @@
-﻿from aiogram import Router, F, types
+from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
 from services.auth_service import AuthService
 from keyboards.menus import get_main_menu

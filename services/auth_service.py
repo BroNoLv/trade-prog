@@ -1,4 +1,4 @@
-﻿from database.models import db
+from database.models import db
 from config.settings import config
 import logging
 
@@ -111,7 +111,7 @@ class AuthService:
                 '''
                 SELECT u.* 
                 FROM users u 
-                WHERE telegram_id = $1
+                WHERE telegram_id = $1 AND token IS NOT NULL
                 ''',
                 telegram_id
             )
