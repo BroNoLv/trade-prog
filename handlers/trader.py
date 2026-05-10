@@ -307,12 +307,14 @@ async def process_max_amount(message: types.Message, state: FSMContext):
             
             await conn.execute('''
                 INSERT INTO payment_details (
-                    trader_id, bank_name, full_name, card_number, 
+                    trader_id, detail_name, detail_type, bank_name, full_name, card_number,
                     phone_number, min_amount, max_amount, is_active
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, TRUE)
             ''',
                 user['user_id'],
+                data.get('detail_name', 'Без названия'),
+                data.get('detail_type', 'card'),
                 data['bank_name'],
                 data['full_name'],
                 data.get('card_number'),

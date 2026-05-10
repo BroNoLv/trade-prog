@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import logging
 import os
 import sys
@@ -7,6 +7,19 @@ from aiogram.exceptions import TelegramNetworkError as NetworkError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiohttp import web
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+
+async def keep_alive_ping():
+    """Keep-alive ping to prevent Render free tier from sleeping"""
+    import aiohttp
+    WEBHOOK_HOST = "https://trade-prog-2.onrender.com"
+    while True:
+        await asyncio.sleep(600)  # 10 minutes
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"{WEBHOOK_HOST}/health") as resp:
+                    logger.info(f"Keep-alive ping: {resp.status}")
+        except Exception as e:
+            logger.warning(f"Keep-alive ping failed: {e}")
 
 from config.settings import config
 from database.models import db
@@ -221,7 +234,11 @@ async def main():
         
         logger.info(f"🌐 Сервер запущен на порту {port}")
         logger.info("🤖 Бот работает через webhook")
-        
+
+        # Keep-alive to prevent Render free tier from sleeping
+        asyncio.create_task(keep_alive_ping())
+        logger.info("💓 Keep-alive ping запущен")
+
         # Держим сервер активным
         await asyncio.Event().wait()
         

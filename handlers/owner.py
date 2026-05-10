@@ -521,7 +521,40 @@ async def confirm_working_deposit_callback(callback_query: types.CallbackQuery):
             await callback_query.answer(f"✅ Рабочий депозит подтвержден")
 
             # Обновляем информацию о пользователях
-            await manage_users(callback_query.message)
+            traders = await conn.fetch('''
+                SELECT user_id, username, telegram_id,
+                       insurance_deposit, working_deposit,
+                       insurance_deposit_confirmed, is_active
+                FROM users
+                WHERE role = 'trader'
+                ORDER BY created_at DESC
+            ''')
+
+            users_text = "👥 Список трейдеров:\n\n"
+
+            for trader_data in traders:
+                status = "✅" if trader_data['insurance_deposit_confirmed'] else "❌"
+                active_status = "🟢" if trader_data['is_active'] else "🔴"
+
+                users_text += f"""
+{active_status} {status} @{trader_data['username'] or 'Нет username'} (ID: {trader_data['user_id']})
+• Страховой: {trader_data['insurance_deposit']} USDT
+• Рабочий: {trader_data['working_deposit']} USDT
+• Депозит подтвержден: {'Да' if trader_data['insurance_deposit_confirmed'] else 'Нет'}
+• Активен: {'Да' if trader_data['is_active'] else 'Нет'}
+"""
+
+            keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    types.InlineKeyboardButton(text="✅ Подтвердить страховой депозит", callback_data="confirm_deposit_menu"),
+                    types.InlineKeyboardButton(text="💰 Подтвердить рабочий депозит", callback_data="confirm_working_deposit_menu")
+                ]
+            ])
+
+            await callback_query.message.edit_text(
+                f"{users_text}",
+                reply_markup=keyboard
+            )
 
     except (ValueError, IndexError) as e:
         print(f"Error in confirm_working_deposit_callback: {e}")
@@ -602,9 +635,12 @@ async def confirm_deposit_callback(callback_query: types.CallbackQuery):
 • Активен: {'Да' if trader_data['is_active'] else 'Нет'}
 """
             
-            keyboard = types.InlineKeyboardMarkup(inline_keyboard=[[
-                types.InlineKeyboardButton(text="✅ Подтвердить депозит", callback_data="confirm_deposit_menu")
-            ]])
+            keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    types.InlineKeyboardButton(text="✅ Подтвердить страховой депозит", callback_data="confirm_deposit_menu"),
+                    types.InlineKeyboardButton(text="💰 Подтвердить рабочий депозит", callback_data="confirm_working_deposit_menu")
+                ]
+            ])
             
             await callback_query.answer(f"✅ Депозит подтвержден и аккаунт активирован")
             await callback_query.message.edit_text(
