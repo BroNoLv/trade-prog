@@ -2,89 +2,105 @@
 
 def get_main_menu(role: str, deposit_confirmed: bool = True):
     """Get main menu based on user role"""
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = []
 
     if role == "trader":
         if not deposit_confirmed:
             # Limited menu for traders without confirmed deposit
-            keyboard.add(KeyboardButton("� Пополнить депозит"))
-            keyboard.add(KeyboardButton("�🚪 Выйти"))
+            buttons = [
+                [KeyboardButton(text="💰 Пополнить депозит")],
+                [KeyboardButton(text="🚪 Выйти")]
+            ]
         else:
-            keyboard.add(KeyboardButton("👤 Личный кабинет"))
-            keyboard.add(KeyboardButton("💳 Мои реквизиты"))
-            keyboard.add(KeyboardButton("📊 Мои сделки"))
-            keyboard.add(KeyboardButton("⚡ Активные заявки"))
-            keyboard.add(KeyboardButton("⚖️ Споры"))
-            keyboard.add(KeyboardButton("💰 Пополнить депозит"))
+            buttons = [
+                [KeyboardButton(text="👤 Личный кабинет")],
+                [KeyboardButton(text="💳 Мои реквизиты")],
+                [KeyboardButton(text="📊 Мои сделки")],
+                [KeyboardButton(text="⚡ Активные заявки")],
+                [KeyboardButton(text="⚖️ Споры")],
+                [KeyboardButton(text="💰 Пополнить депозит")],
+                [KeyboardButton(text="🚪 Выйти")]
+            ]
     
     elif role == "operator":
-        keyboard.add(KeyboardButton("➕ Создать заявку"))
-        keyboard.add(KeyboardButton("📋 Активные заявки"))
-        keyboard.add(KeyboardButton("📊 Статистика"))
-        keyboard.add(KeyboardButton("🔍 Поиск транзакций"))
+        buttons = [
+            [KeyboardButton(text="➕ Создать заявку")],
+            [KeyboardButton(text="📋 Активные заявки")],
+            [KeyboardButton(text="📊 Статистика")],
+            [KeyboardButton(text="🔍 Поиск транзакций")],
+            [KeyboardButton(text="🚪 Выйти")]
+        ]
     
     elif role == "owner":
-        keyboard.add(KeyboardButton("📈 Общая статистика"))
-        keyboard.add(KeyboardButton("🔑 Управление токенами"))
-        keyboard.add(KeyboardButton("💱 Курс USDT"))
-        keyboard.add(KeyboardButton("👥 Управление пользователями"))
-        keyboard.add(KeyboardButton("🔄 Автообновление курса"))
-        keyboard.add(KeyboardButton("🗑️ Удалить сделку"))
+        buttons = [
+            [KeyboardButton(text="📈 Общая статистика")],
+            [KeyboardButton(text="🔑 Управление токенами")],
+            [KeyboardButton(text="💱 Курс USDT")],
+            [KeyboardButton(text="👥 Управление пользователями")],
+            [KeyboardButton(text="🔄 Автообновление курса")],
+            [KeyboardButton(text="🗑️ Удалить сделку")],
+            [KeyboardButton(text="🚪 Выйти")]
+        ]
+    else:
+        buttons = [[KeyboardButton(text="🚪 Выйти")]]
     
-    keyboard.add(KeyboardButton("🚪 Выйти"))
-    return keyboard
+    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
 def get_trader_details_menu():
     """Menu for trader's payment details"""
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add(KeyboardButton("➕ Добавить реквизит"))
-    keyboard.add(KeyboardButton("📋 Список реквизитов"))
-    keyboard.add(KeyboardButton("🔙 Назад"))
-    return keyboard
+    buttons = [
+        [KeyboardButton(text="➕ Добавить реквизит")],
+        [KeyboardButton(text="📋 Список реквизитов")],
+        [KeyboardButton(text="🔙 Назад")]
+    ]
+    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
 def get_confirm_keyboard(deal_id: int):
     """Inline keyboard for deal confirmation"""
-    keyboard = InlineKeyboardMarkup(row_width=2)
-    keyboard.add(
-        InlineKeyboardButton("✅ Подтвердить", callback_data=f"confirm_{deal_id}"),
-        InlineKeyboardButton("❌ Отклонить", callback_data=f"reject_{deal_id}")
-    )
-    return keyboard
+    buttons = [
+        [
+            InlineKeyboardButton(text="✅ Подтвердить", callback_data=f"confirm_{deal_id}"),
+            InlineKeyboardButton(text="❌ Отклонить", callback_data=f"reject_{deal_id}")
+        ]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 def get_dispute_keyboard(deal_id: int):
     """Inline keyboard for disputes"""
-    keyboard = InlineKeyboardMarkup(row_width=2)
-    keyboard.add(
-        InlineKeyboardButton("✅ Подтвердить", callback_data=f"dispute_confirm_{deal_id}"),
-        InlineKeyboardButton("❌ Отклонить", callback_data=f"dispute_reject_{deal_id}")
-    )
-    return keyboard
+    buttons = [
+        [
+            InlineKeyboardButton(text="✅ Подтвердить", callback_data=f"dispute_confirm_{deal_id}"),
+            InlineKeyboardButton(text="❌ Отклонить", callback_data=f"dispute_reject_{deal_id}")
+        ]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 def get_owner_tokens_menu():
     """Owner's token management menu"""
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add(KeyboardButton("🔐 Создать токен"))
-    keyboard.add(KeyboardButton("📋 Список токенов"))
-    keyboard.add(KeyboardButton("❌ Деактивировать токен"))
-    keyboard.add(KeyboardButton("🔙 Назад"))
-    return keyboard
+    buttons = [
+        [KeyboardButton(text="🔐 Создать токен")],
+        [KeyboardButton(text="📋 Список токенов")],
+        [KeyboardButton(text="❌ Деактивировать токен")],
+        [KeyboardButton(text="🔙 Назад")]
+    ]
+    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
 def get_stats_period_menu():
     """Menu for selecting statistics period"""
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add(KeyboardButton("📊 Общая статистика"))
-    return keyboard
+    buttons = [
+        [KeyboardButton(text="📊 Общая статистика")]
+    ]
+    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
 def get_stats_filter_menu():
     """Menu for statistics filtering"""
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    keyboard.add(KeyboardButton("📅 По дате"))
-    keyboard.add(KeyboardButton("👤 По трейдеру"))
-    keyboard.add(KeyboardButton("👨‍💼 По оператору"))
-    keyboard.add(KeyboardButton("💰 По сумме"))
-    keyboard.add(KeyboardButton("🔙 Назад"))
-    return keyboard
+    buttons = [
+        [KeyboardButton(text="📅 По дате"), KeyboardButton(text="👤 По трейдеру")],
+        [KeyboardButton(text="👨‍💼 По оператору"), KeyboardButton(text="💰 По сумме")],
+        [KeyboardButton(text="🔙 Назад")]
+    ]
+    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
 def get_back_button():
     """Simple back button"""
-    return ReplyKeyboardMarkup(resize_keyboard=True).add(KeyboardButton("🔙 Назад"))
+    return ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="🔙 Назад")]], resize_keyboard=True)
