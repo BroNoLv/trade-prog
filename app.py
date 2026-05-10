@@ -215,12 +215,13 @@ async def main():
         setup_application(app, dp, bot=bot)
         
         # Запускаем HTTP сервер
+        port = int(os.getenv('PORT', 8080))
         runner = web.AppRunner(app)
         await runner.setup()
-        site = web.TCPSite(runner, '0.0.0.0', config.PORT)
+        site = web.TCPSite(runner, '0.0.0.0', port)
         await site.start()
         
-        logger.info(f"🌐 Сервер запущен на порту {config.PORT}")
+        logger.info(f"🌐 Сервер запущен на порту {port}")
         logger.info("🤖 Бот работает через webhook")
         
         # Держим сервер активным
