@@ -82,30 +82,28 @@ async def initialize_tokens():
                 )
             """)
             
-            # Удаляем все старые токены и создаем новые
-            logger.info("🔄 Пересоздаем токены...")
-            print("🔄 Удаляем старые токены...")
-            await conn.execute("DELETE FROM tokens")
+            # Проверяем, есть ли уже токены
+            existing = await conn.fetch("SELECT role, token FROM tokens WHERE is_active = TRUE")
             
-            # Создаем новые токены
-            tokens_data = []
-            for role in ['owner', 'operator', 'trader']:
-                token = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
-                await conn.execute(
-                    "INSERT INTO tokens (token, role, is_active) VALUES ($1, $2, TRUE)",
-                    token, role
-                )
-                tokens_data.append((role.upper(), token))
-            
-            logger.info("✅ Новые токены созданы:")
-            for role, token in tokens_data:
-                logger.info(f"🔑 TOKEN FOR {role}: {token}")
-            
-            # Проверяем, что токены сохранились
-            saved_tokens = await conn.fetch("SELECT role, token FROM tokens WHERE is_active = TRUE")
-            logger.info(f"📋 Всего в БД сохранено токенов: {len(saved_tokens)}")
-            for token in saved_tokens:
-                logger.info(f"🔑 SAVED TOKEN FOR {token['role'].upper()}: {token['token']}")
+            if existing:
+                logger.info(f"⚠️ Найдено {len(existing)} существующих токенов, НЕ пересоздаем:")
+                for token in existing:
+                    logger.info(f"🔑 EXISTING TOKEN FOR {token['role'].upper()}: {token['token']}")
+            else:
+                # Создаем новые токены только если их нет
+                logger.info("🔄 Токены не найдены, создаем новые...")
+                tokens_data = []
+                for role in ['owner', 'operator', 'trader']:
+                    token = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+                    await conn.execute(
+                        "INSERT INTO tokens (token, role, is_active) VALUES ($1, $2, TRUE)",
+                        token, role
+                    )
+                    tokens_data.append((role.upper(), token))
+                
+                logger.info("✅ Новые токены созданы:")
+                for role, token in tokens_data:
+                    logger.info(f"🔑 TOKEN FOR {role}: {token}")
                     
     except Exception as e:
         logger.error(f"❌ Ошибка при инициализации токенов: {e}")

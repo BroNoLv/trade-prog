@@ -146,5 +146,5 @@ def register_common_handlers(router: Router):
     router.message.register(start_command, F.text == "/start")
     router.message.register(token_command, F.text.startswith("/token"))
     router.message.register(logout_command, F.text == "/logout")
-    router.message.register(logout_command, F.text == "� Выйти")
+    router.message.register(logout_command, F.text == "🚪 Выйти")
     router.message.register(back_to_main, F.text == "🔙 Назад")
