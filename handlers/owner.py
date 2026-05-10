@@ -672,35 +672,34 @@ async def handle_back_from_tokens(message: types.Message, state: FSMContext):
     await state.clear()
     await message.answer("������� ����:", reply_markup=get_main_menu('owner'))
 
-# ============== ����������� ������������ ==============
 def register_owner_handlers(router: Router):
     # ����������
-    router.message.register(show_owner_stats_menu, F.text == "?? ����� ����������")
-    router.message.register(show_stats_by_period, F.text == "?? ����� ����������", )
+    router.message.register(show_owner_stats_menu, F.text == "📈 Общая статистика")
+    router.message.register(show_stats_by_period, F.text == "📈 Общая статистика")
     
     # ���������� ��������
-    router.message.register(manage_tokens_start, F.text == "?? ���������� ��������")
-    router.message.register(create_token_start, F.text == "?? ������� �����", )
+    router.message.register(manage_tokens_start, F.text == "🔑 Управление токенами")
+    router.message.register(create_token_start, F.text == "🔐 Создать токен")
     router.message.register(process_token_role, OwnerStates.waiting_token_role)
-    router.message.register(list_tokens, F.text == "?? ������ �������")
-    router.message.register(deactivate_token_start, F.text == "? �������������� �����", )
+    router.message.register(list_tokens, F.text == "📋 Список токенов")
+    router.message.register(deactivate_token_start, F.text == "❌ Деактивировать токен")
     router.message.register(process_deactivate_token, OwnerStates.deactivating_token)
     
     # ���������� ������
-    router.message.register(manage_exchange_rate, F.text == "?? ���� USDT")
-    router.message.register(set_rate_manual_start, F.text == "?? ���������� ����", )
+    router.message.register(manage_exchange_rate, F.text == "💱 Курс USDT")
+    router.message.register(set_rate_manual_start, F.text == "✏️ Установить вручную")
     router.message.register(process_manual_rate, OwnerStates.setting_exchange_rate)
-    router.message.register(auto_update_rate, F.text == "?? �������������� �����")
+    router.message.register(auto_update_rate, F.text == "🔄 Автообновление курса")
     
     # ���������� ��������������
-    router.message.register(manage_users, F.text == "?? ���������� ��������������")
+    router.message.register(manage_users, F.text == "👥 Управление пользователями")
     
     # �������� ������
-    router.message.register(delete_specific_deal_start, F.text == "??? ������� ������", )
+    router.message.register(delete_specific_deal_start, F.text == "🗑️ Удалить сделку")
     router.message.register(delete_specific_deal, OwnerStates.deleting_deal)
     
-    # ������ "�����"
-    router.message.register(handle_back_from_tokens, F.text == "?? �����", )
+    # ������ ""
+    router.message.register(handle_back_from_tokens, F.text == "🔙 Назад")
     
     # Callback ��������
     router.callback_query.register(
