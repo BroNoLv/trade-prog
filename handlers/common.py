@@ -3,6 +3,9 @@ from aiogram.fsm.context import FSMContext
 from services.auth_service import AuthService
 from keyboards.menus import get_main_menu
 from config.settings import config
+import logging
+
+logger = logging.getLogger(__name__)
 
 async def start_command(message: types.Message, state: FSMContext):
     """Handle /start command"""
@@ -33,63 +36,64 @@ async def start_command(message: types.Message, state: FSMContext):
 
 async def token_command(message: types.Message, state: FSMContext):
     """Handle /token command for authorization"""
-    # Получаем токен из аргументов команды
-    args = message.text.split()
-    if len(args) < 2:
-        await message.answer("❌ Использование: /token [ваш_токен]")
-        return
-    
-    token = args[1].strip()
-    print(f"🔥 КОМАНДА /token ВЫЗВАНА: {token}")
-    print(f"🔥 Пользователь: {message.from_user.id}, @{message.from_user.username}")
-    
-    # Проверяем длину токена
-    if len(token) != 16 or not token.isalnum():
-        await message.answer("❌ Неверный формат токена. Токен должен быть 16 символов.")
-        return
-    
-    print(f"🔍 Проверяем токен: {token} от пользователя {message.from_user.id}")
-    
-    # Проверяем подключение к БД
-    from database.models import db
-    print(f"🔍 Статус пула БД: {db.pool is not None}")
-    
-    user = await AuthService.authenticate_user(
-        token, 
-        message.from_user.id, 
-        message.from_user.username
-    )
-    
-    print(f"📋 Результат авторизации: {user}")
-    
-    if not user:
-        print("❌ Токен не найден в БД")
-        await message.answer("❌ Неверный токен. Попробуйте еще раз:")
-        return
-    
-    await state.clear()
-    
-    role = user['role']
-    is_active = user.get('is_active', True)
-    insurance_confirmed = user.get('insurance_deposit_confirmed', True)
-    
-    role_names = {
-        "owner": "Владелец",
-        "trader": "Трейдер",
-        "operator": "Оператор"
-    }
-    
-    welcome_message = f"""
+    try:
+        # Получаем токен из аргументов команды
+        args = message.text.split()
+        if len(args) < 2:
+            await message.answer("❌ Использование: /token [ваш_токен]")
+            return
+        
+        token = args[1].strip()
+        logger.info(f"🔥 КОМАНДА /token ВЫЗВАНА: {token}")
+        logger.info(f"🔥 Пользователь: {message.from_user.id}, @{message.from_user.username}")
+        
+        # Проверяем длину токена
+        if len(token) != 16 or not token.isalnum():
+            await message.answer("❌ Неверный формат токена. Токен должен быть 16 символов.")
+            return
+        
+        logger.info(f"🔍 Проверяем токен: {token} от пользователя {message.from_user.id}")
+        
+        # Проверяем подключение к БД
+        from database.models import db
+        logger.info(f"🔍 Статус пула БД: {db.pool is not None}")
+        
+        user = await AuthService.authenticate_user(
+            token, 
+            message.from_user.id, 
+            message.from_user.username
+        )
+        
+        logger.info(f"📋 Результат авторизации: {user}")
+        
+        if not user:
+            logger.info("❌ Токен не найден в БД")
+            await message.answer("❌ Неверный токен. Попробуйте еще раз:")
+            return
+        
+        await state.clear()
+        
+        role = user['role']
+        is_active = user.get('is_active', True)
+        insurance_confirmed = user.get('insurance_deposit_confirmed', True)
+        
+        role_names = {
+            "owner": "Владелец",
+            "trader": "Трейдер",
+            "operator": "Оператор"
+        }
+        
+        welcome_message = f"""
 ✅ Авторизация успешна!
 Роль: {role_names.get(role, role)}
     
 Добро пожаловать в систему!
     """
-    
-    if role == "trader":
-        if not insurance_confirmed:
-            welcome_message += f"""
-            
+        
+        if role == "trader":
+            if not insurance_confirmed:
+                welcome_message += f"""
+                
 ⚠️ ВНИМАНИЕ:
 Для начала работы необходимо пополнить страховой депозит.
 Сумма: {config.REQUIRED_INSURANCE_DEPOSIT} USDT
@@ -100,16 +104,22 @@ async def token_command(message: types.Message, state: FSMContext):
 
 ⚠️ Доступ к функционалу будет ограничен до подтверждения депозита.
 Вы можете проверить статус в "Личном кабинете".
-            """
-        elif not is_active:
-            welcome_message += f"""
-            
+                """
+            elif not is_active:
+                welcome_message += f"""
+                
 ⚠️ Ваш аккаунт деактивирован.
 Обратитесь к владельцу для активации.
-            """
-    
-    deposit_confirmed = insurance_confirmed if role == "trader" else True
-    await message.answer(welcome_message, reply_markup=get_main_menu(role, deposit_confirmed))
+                """
+        
+        deposit_confirmed = insurance_confirmed if role == "trader" else True
+        await message.answer(welcome_message, reply_markup=get_main_menu(role, deposit_confirmed))
+        
+    except Exception as e:
+        logger.error(f"❌ Ошибка в token_command: {e}")
+        import traceback
+        traceback.print_exc()
+        await message.answer(f"❌ Ошибка сервера: {str(e)}")
 
 async def logout_command(message: types.Message, state: FSMContext):
     """Logout user"""
