@@ -137,7 +137,7 @@ async def add_detail_start(message: types.Message, state: FSMContext):
 async def process_detail_name(message: types.Message, state: FSMContext):
     """Обработать название реквизита"""
     if message.text == "🔙 Назад":
-        await state.finish()
+        await state.clear()
         await trader_payment_details(message)
         return
     
@@ -288,7 +288,7 @@ async def process_max_amount(message: types.Message, state: FSMContext):
         has_access, error_msg = await check_trader_access(message.from_user.id)
         if not has_access:
             await message.answer(error_msg, parse_mode="Markdown")
-            await state.finish()
+            await state.clear()
             return
         
         # Сохраняем в базу данных
@@ -314,13 +314,13 @@ async def process_max_amount(message: types.Message, state: FSMContext):
                 max_amount
             )
         
-        await state.finish()
+        await state.clear()
         await message.answer("✅ Реквизит успешно добавлен!", reply_markup=get_main_menu('trader'))
         
     except Exception as e:
         print(f"❌ Ошибка при сохранении реквизита: {e}")
         await message.answer("❌ Ошибка при сохранении реквизита.")
-        await state.finish()
+        await state.clear()
 
 async def show_my_details(message: types.Message):
     """Показать реквизиты трейдера"""
@@ -501,7 +501,7 @@ async def top_up_deposit_start(message: types.Message, state: FSMContext):
 async def process_deposit_amount(message: types.Message, state: FSMContext):
     """Обработать сумму пополнения"""
     if message.text == "🔙 Назад":
-        await state.finish()
+        await state.clear()
         await message.answer("Главное меню:", reply_markup=get_main_menu('trader'))
         return
 
@@ -530,7 +530,7 @@ async def process_deposit_amount(message: types.Message, state: FSMContext):
                 amount, user['user_id']
             )
 
-        await state.finish()
+        await state.clear()
         await message.answer(
             f"✅ Запрос на пополнение рабочего депозита на {amount} USDT отправлен!\n\n"
             f"Ожидайте подтверждения от владельца.",

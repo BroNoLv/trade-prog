@@ -1,4 +1,4 @@
-from aiogram import Router, F, types
+﻿from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from services.deal_service import DealService
@@ -13,18 +13,18 @@ class OperatorStates(StatesGroup):
 
 async def create_deal_start(message: types.Message, state: FSMContext):
     """Start creating new deal"""
-    await state.set_state(OperatorStates.waiting_deal_amount)
+    await state.set_state(OperatorStates.waiting_deal_amount.state)
     await message.answer(
-        "?? ������� ����� ������ � RUB:\n"
-        "������: 15000",
-        reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True).add("?? �����")
+        "💰 Введите сумму сделки в RUB:\n"
+        "Пример: 15000",
+        reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True).add("🔙 Назад")
     )
 
 async def process_deal_amount(message: types.Message, state: FSMContext):
     """Process deal amount and create deal"""
-    if message.text == "?? �����":
+    if message.text == "🔙 Назад":
         await state.clear()
-        await message.answer("������� ����:", reply_markup=get_main_menu('operator'))
+        await message.answer("Главное меню:", reply_markup=get_main_menu('operator'))
         return
     
     try:
@@ -39,49 +39,49 @@ async def process_deal_amount(message: types.Message, state: FSMContext):
             )
             
             if not user:
-                await message.answer("? ������������ �� ������")
+                await message.answer("❌ Пользователь не найден")
                 return
         
         deal, details = await DealService.create_deal(user['user_id'], amount)
         
         if not deal:
-            await message.answer("? �� ������� ���������� ���������� ��� ���� �����")
+            await message.answer("❌ Не найдено подходящих реквизитов для этой суммы")
             return
         
         # Get current rate
         rate = await ExchangeService.get_current_rate()
         
         deal_text = f"""
-? ������� ����� ������ #{deal['deal_number']}
+✅ Создана новая заявка #{deal['deal_number']}
 
-?? ��������� ��� ������:
-� ����: {details['bank_name']}
-� ���: {details['full_name']}
+💳 Реквизиты для оплаты:
+• Банк: {details['bank_name']}
+• ФИО: {details['full_name']}
 """
         
         if details.get('card_number'):
             card_num = details['card_number']
-            deal_text += f"� ����� �����: {card_num}\n"
+            deal_text += f"• Номер карты: {card_num}\n"
         
         if details.get('phone_number'):
-            deal_text += f"� ���: {details['phone_number']}\n"
+            deal_text += f"• СБП: {details['phone_number']}\n"
         
         deal_text += f"""
-?? �����: {amount} RUB / {deal['amount_usdt']} USDT
-?? �������: {deal['created_at'].strftime('%d.%m.%Y %H:%M')}
-? �������� ��: {deal['expires_at'].strftime('%d.%m.%Y %H:%M')}
+💰 Сумма: {amount} RUB / {deal['amount_usdt']} USDT
+📅 Создана: {deal['created_at'].strftime('%d.%m.%Y %H:%M')}
+⏳ Оплатить до: {deal['expires_at'].strftime('%d.%m.%Y %H:%M')}
 
-?? ����������:
-���������� ����� ���������� ����� {amount} RUB.
-�� ������ ������ 30 �����.
-� ������ �������� ����� ��� ��������� ������ �� ����� ��������.
+📝 ИНСТРУКЦИЯ:
+Отправлять сумму необходимо ТОЧНО {amount} RUB.
+На оплату дается 30 минут.
+В случае неверной суммы или просрочки платеж не будет засчитан.
 """
         
         await state.clear()
         await message.answer(deal_text, reply_markup=get_main_menu('operator'))
         
     except ValueError:
-        await message.answer("? ������� ���������� ����� (����� ������ 0):")
+        await message.answer("❌ Введите корректную сумму (число больше 0):")
 
 async def show_operator_stats(message: types.Message):
     """Show operator statistics"""
@@ -92,7 +92,7 @@ async def show_operator_stats(message: types.Message):
         )
         
         if not user:
-            await message.answer("? ������������ �� ������")
+            await message.answer("❌ Пользователь не найден")
             return
         
         stats = await conn.fetchrow(
@@ -112,17 +112,17 @@ async def show_operator_stats(message: types.Message):
         rate = await ExchangeService.get_current_rate()
         
         stats_text = f"""
-?? ���������� ���������
+📊 Статистика оператора
 
-?? ����� ����������:
-� ����� ������: {stats['total_deals'] or 0}
-� ������������: {stats['confirmed_deals'] or 0}
-� �������: {stats['expired_deals'] or 0}
+📈 Общая статистика:
+• Всего заявок: {stats['total_deals'] or 0}
+• Подтверждено: {stats['confirmed_deals'] or 0}
+• Истекло: {stats['expired_deals'] or 0}
 
-?? �������:
-� ����� �����: {stats['total_rub'] or 0} RUB
-� � USDT: {stats['total_usdt'] or 0} USDT
-� ������� ����: {rate} RUB/USDT
+💰 Финансы:
+• Общая сумма: {stats['total_rub'] or 0} RUB
+• В USDT: {stats['total_usdt'] or 0} USDT
+• Текущий курс: {rate} RUB/USDT
 """
         
         await message.answer(stats_text)
@@ -131,8 +131,8 @@ async def search_transactions_start(message: types.Message, state: FSMContext):
     """Start transaction search"""
     await state.set_state(OperatorStates.searching_transaction.state)
     await message.answer(
-        "?? ������� ����� ������ ��� ����� ��� ������:",
-        reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True).add("?? �����")
+        "🔍 Введите номер заявки или сумму для поиска:",
+        reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True).add("🔙 Назад")
     )
 
 async def show_active_deals_operator(message: types.Message):
@@ -144,7 +144,7 @@ async def show_active_deals_operator(message: types.Message):
         )
 
         if not user:
-            await message.answer("? ������������ �� ������")
+            await message.answer("❌ Пользователь не найден")
             return
 
         deals = await conn.fetch(
@@ -159,30 +159,30 @@ async def show_active_deals_operator(message: types.Message):
         )
 
         if not deals:
-            await message.answer("?? �������� ������ ���")
+            await message.answer("📭 Активных заявок нет")
             return
 
         for deal in deals:
             status_emoji = {
-                'pending': '?',
-                'confirmed': '?',
-                'expired': '?',
-                'disputed': '??'
-            }.get(deal['status'], '?')
+                'pending': '⏳',
+                'confirmed': '✅',
+                'expired': '❌',
+                'disputed': '⚖️'
+            }.get(deal['status'], '❓')
 
             deal_text = f"""
-{status_emoji} ������ #{deal['deal_number']}
+{status_emoji} Заявка #{deal['deal_number']}
 
-?? �����: {deal['amount_rub']} RUB
-?? �������: {deal['trader_name']}
-?? �������: {deal['created_at'].strftime('%d.%m.%Y %H:%M')}
-? ������: {deal['status']}
+💰 Сумма: {deal['amount_rub']} RUB
+👤 Трейдер: {deal['trader_name']}
+🕐 Создана: {deal['created_at'].strftime('%d.%m.%Y %H:%M')}
+⏳ Статус: {deal['status']}
 """
 
             keyboard = types.InlineKeyboardMarkup()
             if deal['status'] == 'pending':
                 keyboard.add(types.InlineKeyboardButton(
-                    "?? ������� ����",
+                    "⚖️ Открыть спор",
                     callback_data=f"open_dispute_{deal['deal_id']}"
                 ))
 
@@ -197,11 +197,11 @@ async def show_disputes(message: types.Message):
         )
 
         if not user:
-            await message.answer("? ������������ �� ������")
+            await message.answer("❌ Пользователь не найден")
             return
 
         if user['role'] != 'operator':
-            await message.answer("? ������ ��������. ������ ��������� ����� ������������ ��� �������.")
+            await message.answer("❌ Доступ запрещен. Только операторы могут использовать эту функцию.")
             return
 
         disputes = await conn.fetch(
@@ -216,16 +216,16 @@ async def show_disputes(message: types.Message):
         )
 
         if not disputes:
-            await message.answer("?? ������ ���")
+            await message.answer("📭 Споров нет")
             return
 
         for dispute in disputes:
             dispute_text = f"""
-?? ���� �� ������ #{dispute['deal_number']}
+⚖️ Спор по заявке #{dispute['deal_number']}
 
-?? �����: {dispute['amount_rub']} RUB
-?? �������: {dispute['trader_name']}
-?? �������: {dispute['created_at'].strftime('%d.%m.%Y %H:%M')}
+💰 Сумма: {dispute['amount_rub']} RUB
+👤 Трейдер: {dispute['trader_name']}
+🕐 Создана: {dispute['created_at'].strftime('%d.%m.%Y %H:%M')}
 """
 
             await message.answer(dispute_text)
@@ -234,7 +234,7 @@ async def handle_dispute_callback(callback_query: types.CallbackQuery):
     """Handle dispute button"""
     try:
         if '_' not in callback_query.data or len(callback_query.data.split('_')) < 3:
-            await callback_query.answer("? �������� ������ �������")
+            await callback_query.answer("❌ Неверный формат запроса")
             return
         
         data = callback_query.data
@@ -266,20 +266,20 @@ async def handle_dispute_callback(callback_query: types.CallbackQuery):
                     deal_id, user['user_id']
                 )
             
-            await callback_query.answer("?? ���� ������!")
+            await callback_query.answer("⚖️ Спор открыт!")
             await callback_query.message.edit_text(
-                f"{callback_query.message.text}\n\n? ���� ������"
+                f"{callback_query.message.text}\n\n✅ Спор открыт"
             )
             
     except Exception as e:
         print(f"Error in handle_dispute_callback: {e}")
-        await callback_query.answer("? ������ �������� �����")
+        await callback_query.answer("❌ Ошибка открытия спора")
 
 async def process_transaction_search(message: types.Message, state: FSMContext):
     """Process transaction search"""
-    if message.text == "?? �����":
+    if message.text == "🔙 Назад":
         await state.clear()
-        await message.answer("������� ����:", reply_markup=get_main_menu('operator'))
+        await message.answer("Главное меню:", reply_markup=get_main_menu('operator'))
         return
 
     search_query = message.text.strip()
@@ -291,13 +291,13 @@ async def process_transaction_search(message: types.Message, state: FSMContext):
         )
 
         if not user:
-            await message.answer("? ������������ �� ������")
+            await message.answer("❌ Пользователь не найден")
             return
 
-        # ������� # � ������� �� ������ ������
+        # Убираем # и пробелы из номера заявки
         clean_query = search_query.replace('#', '').strip()
 
-        # ����� �� ������ ������
+        # Поиск по номеру заявки
         deals = await conn.fetch(
             '''
             SELECT d.*, u.username as trader_name
@@ -311,7 +311,7 @@ async def process_transaction_search(message: types.Message, state: FSMContext):
         )
 
         if not deals:
-            # ��������� ����� �� �����
+            # Попробуем поиск по сумме
             try:
                 amount = float(search_query)
                 deals = await conn.fetch(
@@ -329,30 +329,30 @@ async def process_transaction_search(message: types.Message, state: FSMContext):
                 pass
 
         if not deals:
-            await message.answer("? ������ �� �������")
+            await message.answer("❌ Ничего не найдено")
             return
 
         for deal in deals:
             status_emoji = {
-                'pending': '?',
-                'confirmed': '?',
-                'expired': '?',
-                'disputed': '??'
-            }.get(deal['status'], '?')
+                'pending': '⏳',
+                'confirmed': '✅',
+                'expired': '❌',
+                'disputed': '⚖️'
+            }.get(deal['status'], '❓')
 
             deal_text = f"""
-{status_emoji} ������ #{deal['deal_number']}
+{status_emoji} Заявка #{deal['deal_number']}
 
-?? �����: {deal['amount_rub']} RUB
-?? �������: {deal['trader_name']}
-?? ����: {deal['created_at'].strftime('%d.%m.%Y %H:%M')}
-?? ������: {deal['status']}
+💰 Сумма: {deal['amount_rub']} RUB
+👤 Трейдер: {deal['trader_name']}
+📅 Дата: {deal['created_at'].strftime('%d.%m.%Y %H:%M')}
+📊 Статус: {deal['status']}
 """
 
             await message.answer(deal_text)
 
     await state.clear()
-    await message.answer("?? ����� ��������", reply_markup=get_main_menu('operator'))
+    await message.answer("🔍 Поиск завершен", reply_markup=get_main_menu('operator'))
 
 def register_operator_handlers(router: Router):
     router.message.register(create_deal_start, F.text == "➕ Создать заявку")
